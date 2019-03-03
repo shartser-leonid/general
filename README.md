@@ -1,2 +1,2 @@
 # general
-general repository for 
+general repository for all projects
