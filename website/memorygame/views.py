@@ -82,11 +82,6 @@ def question_process(request):
     correct_answer = request.POST['correct_answer']
     user_answer = request.POST['answer']
     result = 'Correct!' if str(correct_answer).lower()==str(user_answer).lower() else 'Wrong.' 
-    
-    
-    
-    #x=HttpResponse()
-    #x.content
     context = {'temp':[user_answer,correct_answer],'result' : result,\
         'message':"Question was to reorder {1}. Correct answer is {2} your answer was {0}".format(user_answer,\
             request.POST['question'],correct_answer)}
