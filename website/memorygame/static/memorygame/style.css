@@ -16,11 +16,11 @@ html {
 body {
     display: table-cell;
     vertical-align: middle;
-    font-size : 20px
+    font-size : 40px
 }
 
-button,input,form {
-    font-size : 20px
+ol,button,input,form {
+    font-size : 40px
 }
 .box {
     width: 180px;

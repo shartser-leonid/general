@@ -39,6 +39,8 @@ def user_session(request):
     #','.join(user_session.viewed_questions
     
     qq=UserMemoryQuestionHistory.objects.order_by('time_stamp').filter(user_id=user_session.user_id)
+    qq = UserMemoryQuestionHistory.get_for_date(user_session.user_id,datetime.now())
+
     context={'user_name' : user_session.user_name, 'question_list':qq,'question_list1':user_session.viewed_questions }
     return render1(request,'memorygame/user_session.html',context)
 
@@ -91,6 +93,7 @@ def question_process(request):
     h.user = get_user(request)
     h.question = request.POST['question']
     h.was_correct = result == 'Correct!'
+    h.user_answer = user_answer
     h.save()
 
     return render1(request,'memorygame/question_answered.html',context)

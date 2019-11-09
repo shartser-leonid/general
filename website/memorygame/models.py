@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from django.db.models import Q
 
 '''
 class MemoryQuestion(models.Model):
@@ -31,7 +32,13 @@ class UserMemoryQuestionHistory(models.Model):
     was_correct = models.BooleanField()
     time_stamp = models.DateTimeField(auto_now_add=True, null=True)
     def __str__(self):
-        return "{} {} {} {}".format(self.time_stamp,self.user.user_name,self.question,self.was_correct)
+        return "{0} : The question was {2}.  {1} answered {3}. It was {4}".format(self.time_stamp,\
+            self.user.user_name,self.question,self.user_answer,'correct :) !!!' if self.was_correct else 'wrong :( .... ')
+    def get_for_date(user_id1,date):
+
+        return UserMemoryQuestionHistory.objects.filter(time_stamp__year=date.year,\
+            time_stamp__month=date.month,
+            time_stamp__day=date.day).select_related().filter(user_id=user_id1)
 
 class ServerLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')
