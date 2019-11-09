@@ -12,7 +12,7 @@ ml = MemoryLogic(mlconfig)
 
 def index(request):
     context={}
-    return render(request, 'memorygame/index.html', context)
+    return render1(request, 'memorygame/index.html', context)
 
 def get_session(request):
     if 'user_id' not in request.session:
@@ -38,14 +38,14 @@ def user_session(request):
         return HttpResponse( "Not logged in!")
     #','.join(user_session.viewed_questions
     context={'user_name' : user_session.user_name, 'question_list':user_session.viewed_questions }
-    return render(request,'memorygame/user_session.html',context)
+    return render1(request,'memorygame/user_session.html',context)
 
 def server(request):
     ServerLog.add_message('server')
     d=ServerLog.get_all()
     d={x.time_stamp:x.message for x in d}
     context={'server' : list(zip(d.keys(),d.values())) }
-    return render(request,'memorygame/server.html',context)
+    return render1(request,'memorygame/server.html',context)
 
 
 def question(request):
@@ -60,7 +60,7 @@ def question(request):
     request.session['user_id']= user_session.json
 
     # save question to DB
-    return render(request,'memorygame/question_display.html',{'form':form,'question':', '.join(list(question_str))})
+    return render1(request,'memorygame/question_display.html',{'form':form,'question':', '.join(list(question_str))})
 
 def question_answer(request):
     ServerLog.add_message('question_answer')
@@ -75,7 +75,7 @@ def question_answer(request):
     request.session['user_id']= user_session.json
 
     # save question to DB
-    return render(request,'memorygame/question_answer.html',{'form':form})
+    return render1(request,'memorygame/question_answer.html',{'form':form})
 
     
 def question_process(request):
@@ -125,7 +125,7 @@ def add_fixed_content(request,response):
 def login_screen(request):
     if request.method == 'POST':
         form = UserLoginForm()
-        return render(request,'memorygame/login.html',{'form':form})
+        return render1(request,'memorygame/login.html',{'form':form})
     return HttpResponse( "Sorry buddy, you can't login like that, do it via homepage.")
 
 
