@@ -1,0 +1,7 @@
+<form action="{% url 'memorygame:login' %}" method=post novalidate>
+    {% csrf_token %}
+    <table border="1">
+        {{form.as_table}}
+    </table>
+<button type="submit">Submit</button>
+</form>

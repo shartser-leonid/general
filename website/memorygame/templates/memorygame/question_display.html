@@ -1,0 +1,22 @@
+
+
+<script>
+    var msg = new SpeechSynthesisUtterance('{{question}}');
+  </script>  
+
+<script src='https://code.responsivevoice.org/responsivevoice.js'></script>
+
+
+
+<!--<body onload="window.speechSynthesis.speak(msg);" -->
+
+    <body onload=    "responsiveVoice.speak('{{question}}');" ></body>
+
+<form action="{% url 'memorygame:question/question_answer' %}" method=post novalidate>
+        {% csrf_token %}
+        <table border="1">
+            {{form.as_table}}
+        </table>
+    <button type="submit">Answer now</button>
+    </form>
+</body>

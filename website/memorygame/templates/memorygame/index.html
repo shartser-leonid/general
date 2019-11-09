@@ -1,0 +1,25 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'memorygame/style.css' %}">
+
+
+<h1> Main Index </h1>
+
+
+<br></br>
+<a href="{% url 'memorygame:question' %}" > Next Question </a>
+<br></br>
+<br></br>
+
+<div>
+    <form action="{% url 'memorygame:login_screen' %}" method="post" style="display:inline-block" > 
+        {% csrf_token %}
+        <input type="submit" value="Login" />
+</form>
+
+<form action="{% url 'memorygame:logout' %}" method="post" style="display:inline-block"> 
+    {% csrf_token %}
+    <input type="submit" value="Logout" />
+</form>
+
+</div>
