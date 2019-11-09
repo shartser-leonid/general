@@ -30,6 +30,8 @@ class UserMemoryQuestionHistory(models.Model):
     user_answer = models.CharField(max_length=200)
     was_correct = models.BooleanField()
     time_stamp = models.DateTimeField(auto_now_add=True, null=True)
+    def __str__(self):
+        return "{} {} {} {}".format(self.time_stamp,self.user.user_name,self.question,self.was_correct)
 
 class ServerLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')

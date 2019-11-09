@@ -37,7 +37,9 @@ def user_session(request):
     if not user_session: 
         return HttpResponse( "Not logged in!")
     #','.join(user_session.viewed_questions
-    context={'user_name' : user_session.user_name, 'question_list':user_session.viewed_questions }
+    
+    qq=UserMemoryQuestionHistory.objects.order_by('time_stamp').filter(user_id=user_session.user_id)
+    context={'user_name' : user_session.user_name, 'question_list':qq,'question_list1':user_session.viewed_questions }
     return render1(request,'memorygame/user_session.html',context)
 
 def server(request):
