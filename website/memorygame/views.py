@@ -91,9 +91,12 @@ def question_process(request):
     h.was_correct = result == 'Correct!'
     h.save()
 
-    html = render(request,'memorygame/question_answered.html',context)
-    return last_display_layer(request,html)
-
+    return render1(request,'memorygame/question_answered.html',context)
+    
+def render1(request,url,context):
+    html = render(request,url,context)
+    return add_fixed_content(request,html)
+    
 
 def test2(request):
     html1="<script src='https://code.responsivevoice.org/responsivevoice.js'+';'></script>"
@@ -113,7 +116,7 @@ def test(request):
     return test2(r)
     #return chain_responses ([test2(r),test2(r)])
 
-def last_display_layer(request,response):
+def add_fixed_content(request,response):
     html = response
     html = html.content.decode()
     return render(request,'memorygame/wrap_html.html',\
