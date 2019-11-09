@@ -1,6 +1,10 @@
 {% autoescape off%}
 {% endautoescape %}
 
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'memorygame/style.css' %}">
+
+
 {{source |safe}}
 
 <br></br>
