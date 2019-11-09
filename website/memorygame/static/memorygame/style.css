@@ -22,3 +22,26 @@ body {
 button,input,form {
     font-size : 20px
 }
+.box {
+    width: 180px;
+    height: 180px;
+    background: black;
+    margin: 20px 50px;
+}
+.circle {
+    border-radius: 50%;
+}
+.inner-border {
+    border: 20px solid black;
+    box-shadow: inset 0px 0px 0px 10px red;
+    box-sizing: border-box; /* Include padding and border in element's width and height */
+}
+#container { width: auto; margin: auto; background-color: grey; padding: auto; }
+.row { height: auto; margin-bottom: auto; position: relative; }
+.row div { height: auto; }
+.single { }
+.column-2 { width: auto; }
+.column-3 { width: auto; }
+.left { float: left; }
+.center { float: left; margin: 0 5%; background-color: orange; }
+.right {  float: right; }
