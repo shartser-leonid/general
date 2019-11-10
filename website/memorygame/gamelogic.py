@@ -32,6 +32,19 @@ class MathMultProblem:
     def solution(self):
         return self.a*self.b
 
+class MathDivProblem:
+    def __init__(self,a,b):
+        self.a=a
+        self.b=b
+    def generate(self):
+        return "Solve the division problem: {} : {} = ?".format(self.a*self.b,self.a)
+    def instructions(self):
+        return "Solve the division problem: {} x {} = ?".format(self.a*self.b,self.a)
+    def solution(self):
+        return self.b
+
+
+
 class DisplayProblem:
     def __init__(self,question_voice,question_text,question_instructions):
         self.question_voice,self.question_text,self.question_instructions=question_voice,question_text,question_instructions
@@ -44,6 +57,9 @@ class MathMultProblemGenerator:
     def generate(self):
         return MathMultProblem(np.random.randint(10),np.random.randint(10))
 
+class MathDivProblemGenerator:
+    def generate(self):
+        return MathDivProblem(np.random.randint(10),np.random.randint(10))
 
 
 class MathGameLogic:
