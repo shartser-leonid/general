@@ -1,14 +1,19 @@
+import numpy as np
 from django.shortcuts import render,render_to_response
 from .forms import *
 from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent
 from django.http import HttpResponse,HttpRequest,Http404
-from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession
+from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator
 import jsons
 from datetime import datetime
 
-mlconfig = MemoryLogicConfig(2)
-ml = MemoryLogic(mlconfig)
+generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator]
 
+mlconfig = MemoryLogicConfig(2)
+mtconfig = MathGameConfig(generator_set)
+
+ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig)]
+#ml = [MathGameLogic(mtconfig)]
 
 def index(request):
     context={}
@@ -69,7 +74,7 @@ def question(request):
 
     user = get_user(request)
     # question created
-    question_str,ans_str,instructions = ml.get_random_string()
+    question_str,question_voice,ans_str,instructions = np.random.choice(ml).get_random_string()
     openStatus = QuestionStatus.OPENED
     question = Question.create(question_str,openStatus)
     question.save()
@@ -89,7 +94,7 @@ def question(request):
     # save question to DB
 
     return render1(request,'memorygame/question_display.html',\
-        {'form':form,'question':', '.join(list(question_str)),\
+        {'form':form,'question':question_str,'question_voice':question_voice,\
             'question_instructions':instructions,
             'question_id':question_id})
 
@@ -125,7 +130,7 @@ def question_process(request):
     user_answer = r['answer']
     result = 'Correct!' if str(correct_answer).lower()==str(user_answer).lower() else 'Wrong.' 
     context = {'temp':[user_answer,correct_answer],'result' : result,\
-        'message':"Question was to reorder {1}. Correct answer is {2} your answer was {0}".format(user_answer,\
+        'message':"Question was: {1}. Correct answer is {2} your answer was {0}".format(user_answer,\
             r['question'],correct_answer)}
     h=UserMemoryQuestionHistory()
     h.user = get_user(request)

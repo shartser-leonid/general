@@ -1,7 +1,7 @@
 
 
 <script>
-    var msg = new SpeechSynthesisUtterance('{{question}}');
+    var msg = new SpeechSynthesisUtterance('{{question_voice}}');
   </script>  
 
 <script src='https://code.responsivevoice.org/responsivevoice.js'></script>
@@ -10,10 +10,11 @@
 
 <!--<body onload="window.speechSynthesis.speak(msg);" -->
 
-    <body onload=    "responsiveVoice.speak('{{question}}');" ></body>
+    <body onload=    "responsiveVoice.speak('{{question_voice}}');" ></body>
 
-<h3> Question #{{question_id}}: {{question_instructions}} </h3>
-<form action="{% url 'memorygame:question/question_answer' %}" method=post novalidate>
+    <h3> Question #{{question_id}}: {{question_instructions}} </h3>
+
+    <form action="{% url 'memorygame:question/question_answer' %}" method=post novalidate>
         {% csrf_token %}
         <table border="1">
             {{form.as_table}}

@@ -5,18 +5,72 @@ class MemoryLogicConfig:
     def __init__(self,string_lengh):
         self.string_length = string_lengh
 
+class MathGameConfig:
+    def __init__(self,question_generators):
+        self.question_generators = question_generators
+
+
+class MathAdditionProblem:
+    def __init__(self,a,b):
+        self.a=a
+        self.b=b
+    def generate(self):
+        return "Solve the additon problem: {} + {} = ?".format(self.a,self.b)
+    def instructions(self):
+        return "Solve the additon problem: {} + {} = ?".format(self.a,self.b)
+    def solution(self):
+        return self.a+self.b
+
+class MathMultProblem:
+    def __init__(self,a,b):
+        self.a=a
+        self.b=b
+    def generate(self):
+        return "Solve the multiplication problem: {} x {} = ?".format(self.a,self.b)
+    def instructions(self):
+        return "Solve the multiplication problem: {} x {} = ?".format(self.a,self.b)
+    def solution(self):
+        return self.a*self.b
+
+class DisplayProblem:
+    def __init__(self,question_voice,question_text,question_instructions):
+        self.question_voice,self.question_text,self.question_instructions=question_voice,question_text,question_instructions
+
+class MathAdditionProblemGenerator:
+    def generate(self):
+        return MathAdditionProblem(np.random.randint(1000),np.random.randint(1000))
+
+class MathMultProblemGenerator:
+    def generate(self):
+        return MathMultProblem(np.random.randint(10),np.random.randint(10))
+
+
+
+class MathGameLogic:
+    def __init__(self,math_game_config):
+        self.question_generators = math_game_config.question_generators
+
+    def get_random_string(self):
+        generated = self.generate()
+        instructions = generated.instructions()
+        return generated.generate(),'',generated.solution(),instructions
+
+    def generate(self):
+        gen = np.random.choice(self.question_generators)
+        return gen().generate()
+
+
 
 class MemoryLogic:
     def __init__(self,memory_logic_config):
-        self.history = []
         self.string_length = memory_logic_config.string_length
     
     def get_random_string(self):
-        generated = self.generate()
-        ans = self.answer(generated)
-        self.history.append(generated)
+        question_voice = self.generate()
+        question_text = "Arrange the sequence "+question_voice
+        ans = self.answer(question_voice)
         instructions = 'Listen to the sequence. Arrange it in order: number first (increasing order), than letters (alphabetical order) .'
-        return generated,ans,instructions
+        return question_text,question_voice, ans,instructions
 
     def answer(self,quest):
         return "".join(sorted(quest))    
