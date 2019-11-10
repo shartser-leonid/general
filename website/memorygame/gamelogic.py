@@ -51,7 +51,7 @@ class TimeDelta:
     def __init__(self,days,hours,minutes):
         self.days,self.hours,self.minutes=days,hours,minutes
     def __str__(self):
-        return "{} day(s), {} hours  {} minutes".format(self.days,self.hours,self.minutes)
+        return "{} hours {} minutes".format(self.hours,self.minutes)
 
 class TimeDeltaFactory:
     @classmethod
@@ -83,9 +83,9 @@ class MathTimeProblem:
     def generate(self):
         op = self.operation
         if op==MathTimeProblem.Operations.ADD:
-            return "Now it is {}. What time time WILL be in {} ?".format(self.base_time,self.delta_time)
+            return "Now it is {:02d}:{:02d}. What time time WILL be in {} ?".format(self.base_time.hour,self.base_time.minute,self.delta_time)
         if op==MathTimeProblem.Operations.SUB:
-            return "Now it is {}. What time time WAS {} ago ?".format(self.base_time,self.delta_time)
+            return "Now it is {:02d}:{:02d}. What time time WAS {} ago ?".format(self.base_time.hour,self.base_time.minute,self.delta_time)
     def instructions(self):
         return self.generate()
     
@@ -96,7 +96,7 @@ class MathTimeProblem:
            ans=self.base_time + timedelta(days=td.days,minutes=td.minutes,hours=td.hours)  
         if op==MathTimeProblem.Operations.SUB:
             ans=self.base_time - timedelta(days=td.days,minutes=td.minutes,hours=td.hours)  
-        return ans    
+        return "{:02d}:{:02d}".format(ans.hour,ans.minute)    
 
 class DisplayProblem:
     def __init__(self,question_voice,question_text,question_instructions):
@@ -121,7 +121,7 @@ class MathTimeProblemGenerator:
 
         basedate=random_date(d1, d2)
 
-        return MathTimeProblem(basedate,np.random.choice(MathTimeProblem.Operations),TimeDeltaFactory.create(10,24,60))
+        return MathTimeProblem(basedate,np.random.choice(MathTimeProblem.Operations),TimeDeltaFactory.create(10,13,61))
 
 
 class MathGameLogic:
