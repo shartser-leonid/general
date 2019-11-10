@@ -9,12 +9,14 @@ class UserLoginForm(forms.Form):
         password = cleaned.get('password')
 
 class QuestionForm(forms.Form):
+    question_id = forms.IntegerField(widget=forms.HiddenInput())
     question = forms.CharField(widget=forms.HiddenInput())
     #answer = forms.CharField(initial='')
     correct_answer = forms.CharField(widget=forms.HiddenInput())
 
 
 class AnswerForm(forms.Form):
+    question_id = forms.IntegerField(widget=forms.HiddenInput())
     question = forms.CharField(widget=forms.HiddenInput())
     answer = forms.CharField(initial='')
     correct_answer = forms.CharField(widget=forms.HiddenInput())

@@ -1,7 +1,7 @@
 from django.db import models
 from datetime import datetime
 from django.db.models import Q
-
+from enum import Enum
 '''
 class MemoryQuestion(models.Model):
     question_text = 'Remember the following sequence\n {}. Please type in separtely the numbers in ascending order and letters in alphabetical order.'
@@ -24,6 +24,54 @@ class UserLog(models.Model):
     message = models.CharField(max_length=200)
     time_stamp = models.DateTimeField('time stamp')
 
+class QuestionStatus(Enum):
+    OPENED = "OPENED"
+    EXPIRED = "EXPIRED"
+    
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)
+
+class QuestionEvent(Enum):
+    ASSIGNED = "ASSIGNED_TO_USER"
+    ANSWERING = "ANSWERING"
+    ANSWERED = "ANSWERED"
+    EXPIRED = "EXPIRED"
+
+    
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)
+
+
+
+class Question(models.Model):
+    question = models.CharField(max_length=200)
+    time_stamp = models.DateTimeField(auto_now_add=True, null=True)
+    status = models.CharField(max_length=200,choices=QuestionStatus.choices()) 
+    
+    @classmethod
+    def create(cls,q,s):
+        question = cls(question=q,status=s)
+        return question
+
+class QuestionLog(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    assigned_to_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    time_stamp = models.DateTimeField(auto_now_add=True, null=True)
+    status = models.CharField(max_length=200,choices=QuestionEvent.choices())
+    
+    @classmethod
+    def create(cls,q,s,user):
+        questionLog = cls(question=q,status=s,assigned_to_user=user)
+        return questionLog
+
+    @classmethod
+    def add_message(cls,question,status,user):
+        m = QuestionLog(question,status,user)
+        m.time_stamp = datetime.now()
+        m.save()
+
 
 class UserMemoryQuestionHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -34,6 +82,7 @@ class UserMemoryQuestionHistory(models.Model):
     def __str__(self):
         return "{0} : The question was {2}.  {1} answered {3}. It was {4}".format(self.time_stamp,\
             self.user.user_name,self.question,self.user_answer,'correct :) !!!' if self.was_correct else 'wrong :( .... ')
+    
     def get_for_date(user_id1,date):
 
         return UserMemoryQuestionHistory.objects.filter(time_stamp__year=date.year,\

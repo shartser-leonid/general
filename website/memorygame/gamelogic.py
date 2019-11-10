@@ -15,7 +15,8 @@ class MemoryLogic:
         generated = self.generate()
         ans = self.answer(generated)
         self.history.append(generated)
-        return generated,ans
+        instructions = 'Listen to the sequence. Arrange it in order: number first (increasing order), than letters (alphabetical order) .'
+        return generated,ans,instructions
 
     def answer(self,quest):
         return "".join(sorted(quest))    

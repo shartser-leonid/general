@@ -12,6 +12,7 @@
 
     <body onload=    "responsiveVoice.speak('{{question}}');" ></body>
 
+<h3> Question #{{question_id}}: {{question_instructions}} </h3>
 <form action="{% url 'memorygame:question/question_answer' %}" method=post novalidate>
         {% csrf_token %}
         <table border="1">

@@ -1,12 +1,12 @@
 from django.shortcuts import render,render_to_response
 from .forms import *
-from .models import User,ServerLog,UserMemoryQuestionHistory
+from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent
 from django.http import HttpResponse,HttpRequest,Http404
 from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession
 import jsons
 from datetime import datetime
 
-mlconfig = MemoryLogicConfig(3)
+mlconfig = MemoryLogicConfig(2)
 ml = MemoryLogic(mlconfig)
 
 
@@ -31,6 +31,15 @@ def get_user(request):
     user = User.objects.get(id=user_session.user_id)
     return user
 
+def get_question(question_id):
+    try:
+        user = Question.objects.get(id=int(float(question_id)))
+    except:
+        raise Exception(question_id)
+
+    return user
+
+
 def user_session(request):
     ServerLog.add_message('user')
     user_session = get_session(request)
@@ -51,20 +60,38 @@ def server(request):
     context={'server' : list(zip(d.keys(),d.values())) }
     return render1(request,'memorygame/server.html',context)
 
-
+# question presented here
 def question(request):
     ServerLog.add_message('question')
     user_session = get_session(request)
     if not user_session: 
         return HttpResponse( "Not logged in!")
 
-    question_str,ans_str = ml.get_random_string()
-    form = QuestionForm(initial={'question': question_str, 'correct_answer':ans_str}, auto_id=False)
+    user = get_user(request)
+    # question created
+    question_str,ans_str,instructions = ml.get_random_string()
+    openStatus = QuestionStatus.OPENED
+    question = Question.create(question_str,openStatus)
+    question.save()
+    question_id=question.id
+
+
+    # assign to user
+    questionlog = QuestionLog.create(question,QuestionEvent.ASSIGNED,user)
+    questionlog.save()
+
+    form = QuestionForm(\
+        initial={'question': question_str,\
+             'correct_answer':ans_str,'question_id' : question_id}, auto_id=False)
     user_session.viewed_questions.append(question_str)
     request.session['user_id']= user_session.json
 
     # save question to DB
-    return render1(request,'memorygame/question_display.html',{'form':form,'question':', '.join(list(question_str))})
+
+    return render1(request,'memorygame/question_display.html',\
+        {'form':form,'question':', '.join(list(question_str)),\
+            'question_instructions':instructions,
+            'question_id':question_id})
 
 def question_answer(request):
     ServerLog.add_message('question_answer')
@@ -73,8 +100,18 @@ def question_answer(request):
         return HttpResponse( "Not logged in!")
 
     r = request.POST
+    user = get_user(request)
+    
+    #get quesiton
+    question = get_question(r['question_id'])
+    # log answering
+    questionlog = QuestionLog.create(question,QuestionEvent.ANSWERING,user)
+    questionlog.save()
+
+
     question_str,ans_str,question = r['question'],r['correct_answer'],r['question']
-    form = AnswerForm(initial={'question':question,'answer': '', 'correct_answer':ans_str}, auto_id=False)
+    form = AnswerForm(initial={'question':question,'answer': '', 
+    'correct_answer':ans_str,'question_id' : r['question_id']}, auto_id=False)
     user_session.viewed_questions.append(question_str)
     request.session['user_id']= user_session.json
 
@@ -83,18 +120,25 @@ def question_answer(request):
 
     
 def question_process(request):
-    correct_answer = request.POST['correct_answer']
-    user_answer = request.POST['answer']
+    r=request.POST
+    correct_answer = r['correct_answer']
+    user_answer = r['answer']
     result = 'Correct!' if str(correct_answer).lower()==str(user_answer).lower() else 'Wrong.' 
     context = {'temp':[user_answer,correct_answer],'result' : result,\
         'message':"Question was to reorder {1}. Correct answer is {2} your answer was {0}".format(user_answer,\
-            request.POST['question'],correct_answer)}
+            r['question'],correct_answer)}
     h=UserMemoryQuestionHistory()
     h.user = get_user(request)
-    h.question = request.POST['question']
+    h.question = r['question']
     h.was_correct = result == 'Correct!'
     h.user_answer = user_answer
     h.save()
+
+    #get quesiton
+    question = get_question(r['question_id'])
+    # log answering
+    questionlog = QuestionLog.create(question,QuestionEvent.ANSWERED,h.user)
+    questionlog.save()
 
     return render1(request,'memorygame/question_answered.html',context)
     
