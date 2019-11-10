@@ -39,7 +39,7 @@ class MathDivProblem:
     def generate(self):
         return "Solve the division problem: {} : {} = ?".format(self.a*self.b,self.a)
     def instructions(self):
-        return "Solve the division problem: {} x {} = ?".format(self.a*self.b,self.a)
+        return "Solve the division problem: {} : {} = ?".format(self.a*self.b,self.a)
     def solution(self):
         return self.b
 
@@ -59,7 +59,7 @@ class MathMultProblemGenerator:
 
 class MathDivProblemGenerator:
     def generate(self):
-        return MathDivProblem(np.random.randint(10),np.random.randint(10))
+        return MathDivProblem(1+np.random.randint(10),np.random.randint(10))
 
 
 class MathGameLogic:
