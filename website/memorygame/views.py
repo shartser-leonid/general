@@ -7,14 +7,15 @@ from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathG
 import jsons
 from datetime import datetime
 
-#generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator]
-generator_set = [MathTimeProblemGenerator]
+generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
+    MathDivProblemGenerator,MathTimeProblemGenerator]
+#generator_set = [MathTimeProblemGenerator]
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
 
-#ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig)]
+ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
 #ml = [MathGameLogic(mtconfig)]
-ml = [FixedQuestionLogic(QuestionSource())]
+#ml = [FixedQuestionLogic(QuestionSource())]
 def index(request):
     context={}
     return render1(request, 'memorygame/index.html', context)
