@@ -130,7 +130,7 @@ def question_process(request):
     user_answer = r['answer']
     result = 'Correct!' if str(correct_answer).lower()==str(user_answer).lower() else 'Wrong.' 
     context = {'temp':[user_answer,correct_answer],'result' : result,\
-        'message':"Question was: {1}. Correct answer is {2} your answer was {0}".format(user_answer,\
+        'message':"Question was: {1} The correct answer is {2} . your answer was {0} .".format(user_answer,\
             r['question'],correct_answer)}
     h=UserMemoryQuestionHistory()
     h.user = get_user(request)
