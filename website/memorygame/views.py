@@ -3,11 +3,11 @@ from django.shortcuts import render,render_to_response
 from .forms import *
 from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent
 from django.http import HttpResponse,HttpRequest,Http404
-from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator
+from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator
 import jsons
 from datetime import datetime
 
-generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator]
+generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator]
 
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)

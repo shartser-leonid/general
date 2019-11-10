@@ -1,0 +1,117 @@
+{
+    "response_code": 0,
+    "results": [
+        {
+            "category": "Entertainment: Film",
+            "type": "multiple",
+            "difficulty": "medium",
+            "question": "In which 1973 film does Yul Brynner play a robotic cowboy who malfunctions and goes on a killing\tspree?",
+            "correct_answer": "Westworld",
+            "incorrect_answers": [
+                "Runaway",
+                "Android",
+                "The Terminators"
+            ]
+        },
+        {
+            "category": "Entertainment: Video Games",
+            "type": "boolean",
+            "difficulty": "easy",
+            "question": "The song &quot;Megalovania&quot; by Toby Fox made its third appearence in the 2015 RPG &quot;Undertale&quot;.",
+            "correct_answer": "True",
+            "incorrect_answers": [
+                "False"
+            ]
+        },
+        {
+            "category": "Entertainment: Music",
+            "type": "multiple",
+            "difficulty": "easy",
+            "question": "Whose signature guitar technique is called the &quot;windmill&quot;?",
+            "correct_answer": "Pete Townshend",
+            "incorrect_answers": [
+                "Jimmy Page",
+                "Eddie Van Halen",
+                "Jimi Hendrix"
+            ]
+        },
+        {
+            "category": "Entertainment: Music",
+            "type": "multiple",
+            "difficulty": "medium",
+            "question": "The 1952 musical composition 4&#039;33&quot;, composed by prolific American composer John Cage, is mainly comprised of what sound?",
+            "correct_answer": "Silence",
+            "incorrect_answers": [
+                "Farts",
+                "People talking",
+                "Cricket chirps"
+            ]
+        },
+        {
+            "category": "Entertainment: Video Games",
+            "type": "multiple",
+            "difficulty": "medium",
+            "question": "What was the first PlayStation game to require the use of the DualShock controller?",
+            "correct_answer": "Ape Escape",
+            "incorrect_answers": [
+                "Metal Gear",
+                "Tekken ",
+                "Tomba 2!"
+            ]
+        },
+        {
+            "category": "Entertainment: Music",
+            "type": "boolean",
+            "difficulty": "easy",
+            "question": "The alternative rock band, They Might Be Giants, released their album &#039;Flood&#039; in 1990. ",
+            "correct_answer": "True",
+            "incorrect_answers": [
+                "False"
+            ]
+        },
+        {
+            "category": "Entertainment: Music",
+            "type": "multiple",
+            "difficulty": "medium",
+            "question": "What was Radiohead&#039;s first album?",
+            "correct_answer": "Pablo Honey",
+            "incorrect_answers": [
+                "The Bends",
+                "Kid A",
+                "A Moon Shaped Pool"
+            ]
+        },
+        {
+            "category": "History",
+            "type": "multiple",
+            "difficulty": "medium",
+            "question": "In what dialogue did Socrates defend himself to the court of Athens? ",
+            "correct_answer": "The Apology",
+            "incorrect_answers": [
+                "The Euthyphro",
+                "The Laws",
+                "The Republic"
+            ]
+        },
+        {
+            "category": "Science & Nature",
+            "type": "boolean",
+            "difficulty": "medium",
+            "question": "Sugar contains fat.",
+            "correct_answer": "False",
+            "incorrect_answers": [
+                "True"
+            ]
+        },
+        {
+            "category": "Entertainment: Japanese Anime & Manga",
+            "type": "boolean",
+            "difficulty": "hard",
+            "question": "In the &quot;To Love-Ru&quot; series, Peke is considered a female robot.",
+            "correct_answer": "True",
+            "incorrect_answers": [
+                "False"
+            ]
+        }
+    ]
+}

@@ -1,6 +1,10 @@
 import numpy as np
 import datetime
 from jsons import JsonSerializable,KEY_TRANSFORMER_CAMELCASE,KEY_TRANSFORMER_SNAKECASE
+from enum import Enum
+from datetime import timedelta
+from random import randrange
+
 class MemoryLogicConfig:
     def __init__(self,string_lengh):
         self.string_length = string_lengh
@@ -43,7 +47,56 @@ class MathDivProblem:
     def solution(self):
         return self.b
 
+class TimeDelta:
+    def __init__(self,days,hours,minutes):
+        self.days,self.hours,self.minutes=days,hours,minutes
+    def __str__(self):
+        return "{} day(s), {} hours  {} minutes".format(self.days,self.hours,self.minutes)
 
+class TimeDeltaFactory:
+    @classmethod
+    def create(cls,d,h,m):
+        return TimeDelta(np.random.randint(d),np.random.randint(h),np.random.randint(m))
+
+def random_date(start, end):
+    """
+    This function will return a random datetime between two datetime 
+    objects.
+    """
+    delta = end - start
+    int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
+    random_second = randrange(int_delta)
+    return start + timedelta(seconds=random_second)
+
+class MathTimeProblem:
+    def __init__(self,base_time,operation,delta_time):
+        self.base_time = base_time
+        self.operation = operation
+        self.delta_time = delta_time
+    
+    class Operations(Enum):
+        ADD='Add'
+        SUB='Sub'
+
+    def display(self,td):
+        return 
+    def generate(self):
+        op = self.operation
+        if op==MathTimeProblem.Operations.ADD:
+            return "Now it is {}. What time time WILL be in {} ?".format(self.base_time,self.delta_time)
+        if op==MathTimeProblem.Operations.SUB:
+            return "Now it is {}. What time time WAS {} ago ?".format(self.base_time,self.delta_time)
+    def instructions(self):
+        return self.generate()
+    
+    def solution(self):
+        op = self.operation
+        td = self.delta_time
+        if op==MathTimeProblem.Operations.ADD:
+           ans=self.base_time + timedelta(days=td.days,minutes=td.minutes,hours=td.hours)  
+        if op==MathTimeProblem.Operations.SUB:
+            ans=self.base_time - timedelta(days=td.days,minutes=td.minutes,hours=td.hours)  
+        return ans    
 
 class DisplayProblem:
     def __init__(self,question_voice,question_text,question_instructions):
@@ -60,6 +113,15 @@ class MathMultProblemGenerator:
 class MathDivProblemGenerator:
     def generate(self):
         return MathDivProblem(1+np.random.randint(10),np.random.randint(10))
+
+class MathTimeProblemGenerator:
+    def generate(self):
+        d1 = datetime.datetime.strptime('1/1/1990 1:30 PM', '%m/%d/%Y %I:%M %p')
+        d2 = datetime.datetime.strptime('1/1/2050 4:50 AM', '%m/%d/%Y %I:%M %p')
+
+        basedate=random_date(d1, d2)
+
+        return MathTimeProblem(basedate,np.random.choice(MathTimeProblem.Operations),TimeDeltaFactory.create(10,24,60))
 
 
 class MathGameLogic:
