@@ -1,9 +1,9 @@
 import numpy as np
 from django.shortcuts import render,render_to_response
 from .forms import *
-from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent
+from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent,FixedQuestion
 from django.http import HttpResponse,HttpRequest,Http404
-from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator
+from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator,QuestionSource,FixedQuestionLogic
 import jsons
 from datetime import datetime
 
@@ -13,8 +13,8 @@ mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
 
 #ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig)]
-ml = [MathGameLogic(mtconfig)]
-
+#ml = [MathGameLogic(mtconfig)]
+ml = [FixedQuestionLogic(QuestionSource())]
 def index(request):
     context={}
     return render1(request, 'memorygame/index.html', context)

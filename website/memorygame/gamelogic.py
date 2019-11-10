@@ -4,6 +4,7 @@ from jsons import JsonSerializable,KEY_TRANSFORMER_CAMELCASE,KEY_TRANSFORMER_SNA
 from enum import Enum
 from datetime import timedelta
 from random import randrange
+from .models import FixedQuestion
 
 class MemoryLogicConfig:
     def __init__(self,string_lengh):
@@ -165,6 +166,29 @@ class MemoryLogic:
             letters.remove(c)
             digits.remove(n)
         return sequence
+
+class QuestionSource:
+    def __init__(self):
+        self.questions = FixedQuestion.objects.all()
+
+    def get_random_question(self):
+        q = np.random.choice(self.questions)
+        return q
+
+class FixedQuestionLogic:
+    def __init__(self,question_source):
+        self.question_source = question_source
+    
+    def get_random_string(self):
+        qs=self.question_source.get_random_question()
+        question_voice = qs.question
+        question_text = question_voice
+        answer = qs.answer
+        instructions = 'Answer the following question.'+question_text
+        return question_text,question_voice, answer,instructions
+
+    
+
 
 class UserSession(JsonSerializable
               .with_dump(key_transformer=KEY_TRANSFORMER_CAMELCASE)

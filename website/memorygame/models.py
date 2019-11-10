@@ -24,6 +24,22 @@ class UserLog(models.Model):
     message = models.CharField(max_length=200)
     time_stamp = models.DateTimeField('time stamp')
 
+
+class QuestionCategory(Enum):
+    GENERAL = "GENERAL"
+    MATH = "MATH"
+    MEMORY = "MEMORY"
+    GEOGRAPHY = "GEOGRAPHY"
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)
+
+class FixedQuestion(models.Model):
+    question = models.CharField(max_length=200)
+    answer = models.CharField(max_length=200)
+    category = models.CharField(max_length=200,choices=QuestionCategory.choices()) 
+
+
 class QuestionStatus(Enum):
     OPENED = "OPENED"
     EXPIRED = "EXPIRED"
@@ -100,8 +116,6 @@ class ServerLog(models.Model):
     def get_all():
         return ServerLog.objects.all()
 
-
-# Create your models here.
 class UserProfileInfo(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)
     profile_pic = models.ImageField(upload_to='profile_pics',blank=True)
