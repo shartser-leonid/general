@@ -19,8 +19,6 @@ mtconfig = MathGameConfig(generator_set)
 ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
 #ml = [MathGameLogic(mtconfig)]
 #ml = [FixedQuestionLogic(QuestionSource())]
-def ppp(request):
-    return HttpResponse("ppp")
 
 def index(request):
     context={}
@@ -39,7 +37,7 @@ def get_session(request):
 def get_user(request):
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
     user = User.objects.get(id=user_session.user_id)
     return user
 
@@ -66,6 +64,11 @@ def get_user_program_progress(user,program):
 def get_program(prog_user_id):
     return AssignedProgramUser.objects.get(id=prog_user_id)
 
+def get_active_user_program(user):
+    activep = UserActiveProgramContext.objects.get(user_id=user.id)
+    return activep
+
+
 def set_active_user_program(user,program):
     pass
 
@@ -75,7 +78,7 @@ def get_finished_user_programs(user):
 def program_view(request):
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
     assigned_progs=get_user_assigned_program(user)
@@ -89,7 +92,7 @@ def program_view(request):
 def program_activate(request,user_prog_id):
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
     program = get_program(user_prog_id)
@@ -103,7 +106,7 @@ def program_activate(request,user_prog_id):
 def program_progress(request,user_prog_id):
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
     program = get_program(user_prog_id)
@@ -118,7 +121,7 @@ def program_progress(request,user_prog_id):
 def program_report(request,prog_id):
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
     program = get_program(prog_id)
@@ -130,7 +133,7 @@ def user_session(request):
     ServerLog.add_message('user')
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return  render1(request,"Not logged in!",{},True)
     #','.join(user_session.viewed_questions
     
     qq=UserMemoryQuestionHistory.objects.order_by('time_stamp').filter(user_id=user_session.user_id)
@@ -151,7 +154,7 @@ def question(request):
     ServerLog.add_message('question')
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
 
@@ -182,7 +185,7 @@ def question_answer(request):
     ServerLog.add_message('question_answer')
     user_session = get_session(request)
     if not user_session: 
-        return HttpResponse( "Not logged in!")
+        return   render1(request,"Not logged in!",{},True)
 
     r = request.POST
     user = get_user(request)
@@ -227,9 +230,17 @@ def question_process(request):
 
     return render1(request,'memorygame/question_answered.html',context)
     
-def render1(request,url,context):
-    html = render(request,url,context)
-    return add_fixed_content(request,html)
+def render1(request,url,context,is_html=False):
+    html = url if is_html else render(request,url,context)
+    context['user_name']='No user'
+    context['program']='No program'
+    try:
+        user=get_user(request)
+        context['user_name'] = user.user_name
+        context['program'] = get_active_user_program(user).program.program.name
+    except:
+        pass
+    return add_fixed_content(request,html,context,is_html)
     
 
 def test2(request):
@@ -250,17 +261,18 @@ def test(request):
     return test2(r)
     #return chain_responses ([test2(r),test2(r)])
 
-def add_fixed_content(request,response):
+def add_fixed_content(request,response,context,is_html=False):
     html = response
-    html = html.content.decode()
-    return render(request,'memorygame/wrap_html.html',\
-        {'source':html})
+    if not is_html:
+        html = html.content.decode()
+    context['source'] = html
+    return render(request,'memorygame/wrap_html.html',context)
 
 def login_screen(request):
     if request.method == 'POST':
         form = UserLoginForm()
         return render1(request,'memorygame/login.html',{'form':form})
-    return HttpResponse( "Sorry buddy, you can't login like that, do it via homepage.")
+    return render1(request,"Sorry buddy, you can't login like that, do it via homepage.",{},True)
 
 
 def login(request):
@@ -276,20 +288,20 @@ def login(request):
                 u=UserSession.from_json(request.session['user_id'])
 
             if u and u.user_name==ru:
-                return HttpResponse( m.user_name+' already logged in, please go on.')
+                return render1(request, m.user_name+' already logged in, please go on.',{},True)
             request.session['user_id'] = UserSession(m.user_name,m.id).json#.toJSON()
-            return HttpResponse( "Wellcome "+m.user_name+'!')
+            return render1(request, "Wellcome "+m.user_name+'!',{},True)
         else: 
-            return HttpResponse( "Not registered user "+ru)
+            return render1( request,"Not registered user "+ru,{},True)
 
-    return HttpResponse( "Sorry buddy, you can't login like that, do it via homepage.")
+    return render1(request,"Sorry buddy, you can't login like that, do it via homepage.",{},True)
 
 def logout(request):
     if request.method == 'POST':
         if 'user_id' not in request.session:
-            return HttpResponse( "Not logged in!")
+            return  render1(request,"Not logged in!",{},True)
         user_session = UserSession.from_json(request.session['user_id'])#jsons.default_object_deserializer(request.session['user_id'],UserSession)
         context={'user_name' : user_session.user_name, }
         del request.session['user_id']
-        return HttpResponse( "Bye Bye "+user_session.user_name+'!')
-    return HttpResponse( "Sorry buddy, you can't logout like that, do it via homepage")
+        return render1(request,"Bye Bye "+user_session.user_name+'!',{},True)
+    return render1(request,"Sorry buddy, you can't logout like that, do it via homepage",{},True)

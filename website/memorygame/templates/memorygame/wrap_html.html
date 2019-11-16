@@ -4,23 +4,17 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'memorygame/style.css' %}">
 
+<h3> User: {{user_name}}   &nbsp; &nbsp; &nbsp; &nbsp;  Active program: {{program}}  </h3>
 
 {{source |safe}}
 
 <br></br>
-<div>
-
-
-</div>
-<br></br>
-
 
 <div id="container">
-        <div class="column-2 left"> <a href="{% url 'memorygame:index' %}" > Index </a>
-        </div>
-          <div class="column-2 right"> <a href="{% url 'memorygame:user' %}" > User Session </a>
-          </div>
-         </div>
-         
-        </div>
- 
+  <div class="column-2 left"> <a href="{% url 'memorygame:index' %}"> Index </a>
+  </div>
+  <div class="column-2 right"> <a href="{% url 'memorygame:user' %}"> User Session </a>
+  </div>
+</div>
+
+</div>

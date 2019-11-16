@@ -15,23 +15,14 @@
 
 
 
+    <form action="{% url 'memorygame:login_screen' %}" method="post" style="display:inline-block">
+            {% csrf_token %}
+            <input type="submit" value="Login" />
+   </form> &nbsp;&nbsp;&nbsp;&nbsp;
 
-    <div id="container">
-        <div class="column-2 left">
-            <form action="{% url 'memorygame:login_screen' %}" method="post" style="display:inline-block">
-                {% csrf_token %}
-                <input type="submit" value="Login" />
-            </form>
-        </div>
-        <div class="column-2 right">
-            <form action="{% url 'memorygame:logout' %}" method="post" style="display:inline-block">
-                {% csrf_token %}
-                <input type="submit" value="Logout" />
-            </form>
-        </div>
-    </div>
-
-    </div>
-
+   <form action="{% url 'memorygame:logout' %}" method="post" style="display:inline-block">
+        {% csrf_token %}
+        <input type="submit" value="Logout" />
+    </form>
 
 </body>
