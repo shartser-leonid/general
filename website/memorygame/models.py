@@ -2,13 +2,6 @@ from django.db import models
 from datetime import datetime
 from django.db.models import Q
 from enum import Enum
-'''
-class MemoryQuestion(models.Model):
-    question_text = 'Remember the following sequence\n {}. Please type in separtely the numbers in ascending order and letters in alphabetical order.'
-    question_data = models.CharField(max_length=200)
-    question_correct_answer = models.CharField(max_length=200)
-    pub_date = models.DateTimeField('date published')
-'''
 
 class User(models.Model):
     user_name = models.CharField(max_length=200)
@@ -23,7 +16,6 @@ class UserLog(models.Model):
     action = models.ForeignKey(UserLogAction, on_delete=models.CASCADE)
     message = models.CharField(max_length=200)
     time_stamp = models.DateTimeField('time stamp')
-
 
 class QuestionCategory(Enum):
     GENERAL = "GENERAL"

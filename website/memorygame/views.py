@@ -64,6 +64,10 @@ def get_user_program_progress(user,program):
 def get_program(prog_user_id):
     return AssignedProgramUser.objects.get(id=prog_user_id)
 
+def get_program_progress(prog_user_id):
+    return AssignedProgramUser.objects.get(id=prog_user_id)
+
+
 def get_active_user_program(user):
     activep = UserActiveProgramContext.objects.get(user_id=user.id)
     return activep
@@ -110,12 +114,10 @@ def program_progress(request,user_prog_id):
 
     user = get_user(request)
     program = get_program(user_prog_id)
-    UserActiveProgramContext.objects.filter(user_id=user.id).delete()
-    activation=UserActiveProgramContext.create(user,program)
-    activation.save()
+    prgram_list = AssignedProgramCategory.objects.filter(assigned_program_id=program.program.id)
 
-    context={'user_name' : user_session.user_name,  'program' : program.program.name }
-    return render1(request,'memorygame/program_activated.html',context)
+    context={'program_list':prgram_list}
+    return render1(request,'memorygame/program_progress.html',context)
 
 
 def program_report(request,prog_id):
@@ -149,6 +151,10 @@ def server(request):
     context={'server' : list(zip(d.keys(),d.values())) }
     return render1(request,'memorygame/server.html',context)
 
+def get_next_question(user_program):
+    # selected unfinished categories 
+    pass
+
 # question presented here
 def question(request):
     ServerLog.add_message('question')
@@ -157,6 +163,21 @@ def question(request):
         return render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
+
+    # get active program
+    program = get_active_user_program(user)
+    program_goal = AssignedProgramCategory.objects.filter(assigned_program_id=program.program.id)
+    #program_progress = AssignedProgramUserProgress.objects.filter()
+    d1={x.category:x.number_of_questions for x in program_goal}
+    pool=[]
+    ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
+    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig),'DEFAULT': FixedQuestionLogic(QuestionSource()  }
+    for i im d1.items():
+        pool.extend( i[1]*)
+
+
+    # get next question from the program
+
 
     # question created
     question_str,question_voice,ans_str,instructions = np.random.choice(ml).get_random_string()
@@ -171,7 +192,7 @@ def question(request):
     form = QuestionForm(\
         initial={'question': question_str,\
              'correct_answer':ans_str,'question_id' : question_id}, auto_id=False)
-    user_session.viewed_questions.append(question_str)
+    #user_session.viewed_questions.append(question_str)
     request.session['user_id']= user_session.json
 
     # save question to DB
