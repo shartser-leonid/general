@@ -1,32 +1,37 @@
-
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'memorygame/style.css' %}">
 
 <body>
-<h1> Main Index </h1>
+    <h1> Main Index </h1>
 
 
-<br></br>
-<a href="{% url 'memorygame:question'%}" > Next Question </a>
-<br></br>
-<br></br>
-<br></br>
+    <br></br>
+    <a href="{% url 'memorygame:question'%}"> Next Question </a>
+    <br></br>
+    <a href="{% url 'memorygame:program_view'%}"> Programs </a>
+    <br></br>
+    <br></br>
+    <br></br>
 
 
 
 
-<div id="container">
-       <div class="column-2 left"> <form action="{% url 'memorygame:login_screen' %}" method="post" style="display:inline-block" > 
+    <div id="container">
+        <div class="column-2 left">
+            <form action="{% url 'memorygame:login_screen' %}" method="post" style="display:inline-block">
                 {% csrf_token %}
                 <input type="submit" value="Login" />
-            </form></div>
-         <div class="column-2 right"> <form action="{% url 'memorygame:logout' %}" method="post" style="display:inline-block"> 
+            </form>
+        </div>
+        <div class="column-2 right">
+            <form action="{% url 'memorygame:logout' %}" method="post" style="display:inline-block">
                 {% csrf_token %}
                 <input type="submit" value="Logout" />
-            </form></div>
+            </form>
         </div>
-        
-       </div>
+    </div>
+
+    </div>
 
 
 </body>

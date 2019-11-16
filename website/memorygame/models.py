@@ -54,7 +54,6 @@ class QuestionEvent(Enum):
     ANSWERED = "ANSWERED"
     EXPIRED = "EXPIRED"
 
-    
     @classmethod
     def choices(cls):
         return tuple((i.name, i.value) for i in cls)
@@ -99,7 +98,8 @@ class UserMemoryQuestionHistory(models.Model):
         return "{0} : The question was {2}.  {1} answered {3}. It was {4}".format(self.time_stamp,\
             self.user.user_name,self.question,self.user_answer,'correct :) !!!' if self.was_correct else 'wrong :( .... ')
     
-    def get_for_date(user_id1,date):
+    @classmethod
+    def get_for_date(cls,user_id1,date):
 
         return UserMemoryQuestionHistory.objects.filter(time_stamp__year=date.year,\
             time_stamp__month=date.month,
@@ -108,12 +108,16 @@ class UserMemoryQuestionHistory(models.Model):
 class ServerLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')
     message = models.CharField(max_length=200)
-    def add_message(message):
+    
+    @classmethod
+    def add_message(cls,message):
         m = ServerLog()
         m.time_stamp = datetime.now()
         m.message = message
         m.save()
-    def get_all():
+    
+    @classmethod
+    def get_all(cls):
         return ServerLog.objects.all()
 
 class UserProfileInfo(models.Model):
@@ -121,3 +125,42 @@ class UserProfileInfo(models.Model):
     profile_pic = models.ImageField(upload_to='profile_pics',blank=True)
     def __str__(self):
         return self.user.username
+
+class AssignedProgram(models.Model):
+    name = models.CharField(max_length=200)
+    author = models.CharField(max_length=200)
+
+class AssignedProgramCategory(models.Model):
+    assigned_program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
+    number_of_questions = models.IntegerField()
+    category = models.CharField(max_length=200,choices=QuestionCategory.choices()) 
+
+
+class ProgramStatus(Enum):
+    NEW = "NEW"
+    IN_PROCESS = "IN_PROCESS"
+    DONE = "DONE"
+    
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)
+
+class AssignedProgramUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
+    status = models.CharField(max_length=200,choices=ProgramStatus.choices())
+
+class AssignedProgramUserProgress(models.Model):
+    program_user = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE)
+    user_question_history = models.ForeignKey(UserMemoryQuestionHistory, on_delete=models.CASCADE)
+
+    
+class UserActiveProgramContext(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    program = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE)
+
+    @classmethod
+    def create(cls,u,p):
+        ctxt = cls(user=u,program=p)
+        return ctxt
+

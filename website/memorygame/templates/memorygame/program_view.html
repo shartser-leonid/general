@@ -1,0 +1,30 @@
+<body>
+
+
+
+    <h1> Programs for {{user_name}} </h1>
+
+    <h2> Assigned programs (click the link to activate ) </h2>
+    <ol>
+        {% for q in assigned_program_list %}
+        <li>
+            <pre> Program {{q.program.name}} for {{q.user.user_name}} (prpgram-user id# {{q.id}}) </pre>
+            <a href="{% url 'memorygame:program_activate' q.id %}"> Activate </a> &nbsp;
+            <a href="{% url 'memorygame:program_progress' q.id %}"> Progress </a>
+
+        </li>
+        {% endfor %}
+    </ol>
+
+    <h2> Finished Programs for {{user_name}} </h2>
+    <ol>
+        {% for q in finished_program_list %}
+        <li>
+                <pre> Program {{q.program.name}} for {{q.user.user_name}} (prpgram-user id# {{q.id}}) </pre>
+                <a href="{% url 'memorygame:program_progress' q.id %}"> Progress </a>
+            </li>
+        {% endfor %}
+    </ol>
+
+
+</body>

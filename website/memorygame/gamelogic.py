@@ -149,7 +149,7 @@ class MemoryLogic:
         question_text = "Arrange the sequence "+question_voice
         ans = self.answer(question_voice)
         instructions = 'Listen to the sequence. Arrange it in order: number first (increasing order), than letters (alphabetical order) .'
-        return question_text,'!.!.!.!.!.!.! '.join(list(question_voice)), ans,instructions
+        return question_text,','.join(list(question_voice)), ans,instructions
 
     def answer(self,quest):
         return "".join(sorted(quest))    
@@ -207,3 +207,7 @@ class UserSession(JsonSerializable
 
 
 
+#%%
+print ("Ff")
+
+# %%

@@ -15,5 +15,10 @@ urlpatterns = [
     path('user/',views.user_session ,name='user'),
     path('server/',views.server ,name='server'),
     path('test/',views.test ,name='test'),
+    path('program_view/', views.program_view, name='program_view'),
+    path('program_activate/<int:user_prog_id>/', views.program_activate, name='program_activate'),
+    path('program_progress/<int:user_prog_id>/', views.program_progress, name='program_progress'),
+    path('program_report/<int:id>/', views.program_view, name='program_report')
+    
     ]
  

@@ -2,10 +2,13 @@ import numpy as np
 from django.shortcuts import render,render_to_response
 from .forms import *
 from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent,FixedQuestion
+from .models import AssignedProgram,AssignedProgramCategory,AssignedProgramUser,AssignedProgramUserProgress,UserActiveProgramContext
+from .models import ProgramStatus
 from django.http import HttpResponse,HttpRequest,Http404
 from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator,QuestionSource,FixedQuestionLogic
 import jsons
 from datetime import datetime
+from django.db.models import Q
 
 generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
     MathDivProblemGenerator,MathTimeProblemGenerator]
@@ -16,6 +19,9 @@ mtconfig = MathGameConfig(generator_set)
 ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
 #ml = [MathGameLogic(mtconfig)]
 #ml = [FixedQuestionLogic(QuestionSource())]
+def ppp(request):
+    return HttpResponse("ppp")
+
 def index(request):
     context={}
     return render1(request, 'memorygame/index.html', context)
@@ -45,6 +51,80 @@ def get_question(question_id):
 
     return user
 
+def get_user_assigned_program(user):
+    assigned = AssignedProgramUser.objects.filter(user_id=user.id).filter(~Q(status=ProgramStatus.DONE.value))
+    return assigned
+
+def get_user_finished_program(user):
+    assigned = AssignedProgramUser.objects.filter(user_id=user.id).filter(status=ProgramStatus.DONE.value)
+    return assigned
+
+
+def get_user_program_progress(user,program):
+    return AssignedProgramUserProgress.objects.filter(user_id=user.id).filter(program_id=program.id)
+
+def get_program(prog_user_id):
+    return AssignedProgramUser.objects.get(id=prog_user_id)
+
+def set_active_user_program(user,program):
+    pass
+
+def get_finished_user_programs(user):
+    pass
+
+def program_view(request):
+    user_session = get_session(request)
+    if not user_session: 
+        return HttpResponse( "Not logged in!")
+
+    user = get_user(request)
+    assigned_progs=get_user_assigned_program(user)
+    finished_progs=get_user_finished_program(user)
+
+    context={'user_name' : user_session.user_name,\
+          'finished_program_list':finished_progs,\
+          'assigned_program_list':assigned_progs  }
+    return render1(request,'memorygame/program_view.html',context)
+
+def program_activate(request,user_prog_id):
+    user_session = get_session(request)
+    if not user_session: 
+        return HttpResponse( "Not logged in!")
+
+    user = get_user(request)
+    program = get_program(user_prog_id)
+    UserActiveProgramContext.objects.filter(user_id=user.id).delete()
+    activation=UserActiveProgramContext.create(user,program)
+    activation.save()
+
+    context={'user_name' : user_session.user_name,  'program' : program.program.name }
+    return render1(request,'memorygame/program_activated.html',context)
+
+def program_progress(request,user_prog_id):
+    user_session = get_session(request)
+    if not user_session: 
+        return HttpResponse( "Not logged in!")
+
+    user = get_user(request)
+    program = get_program(user_prog_id)
+    UserActiveProgramContext.objects.filter(user_id=user.id).delete()
+    activation=UserActiveProgramContext.create(user,program)
+    activation.save()
+
+    context={'user_name' : user_session.user_name,  'program' : program.program.name }
+    return render1(request,'memorygame/program_activated.html',context)
+
+
+def program_report(request,prog_id):
+    user_session = get_session(request)
+    if not user_session: 
+        return HttpResponse( "Not logged in!")
+
+    user = get_user(request)
+    program = get_program(prog_id)
+    assigned_progs=get_user_assigned_program(user)
+    context={'user_name' : user_session.user_name,  'program' : program }
+    return render1(request,'memorygame/program_report.html',context)
 
 def user_session(request):
     ServerLog.add_message('user')
@@ -74,14 +154,13 @@ def question(request):
         return HttpResponse( "Not logged in!")
 
     user = get_user(request)
+
     # question created
     question_str,question_voice,ans_str,instructions = np.random.choice(ml).get_random_string()
     openStatus = QuestionStatus.OPENED
     question = Question.create(question_str,openStatus)
     question.save()
     question_id=question.id
-
-
     # assign to user
     questionlog = QuestionLog.create(question,QuestionEvent.ASSIGNED,user)
     questionlog.save()
