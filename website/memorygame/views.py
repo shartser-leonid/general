@@ -165,22 +165,22 @@ def question(request):
     user = get_user(request)
 
     # get active program
-    program = get_active_user_program(user)
-    program_goal = AssignedProgramCategory.objects.filter(assigned_program_id=program.program.id)
+    p = get_active_user_program(user)
+    program_goal = AssignedProgramCategory.objects.filter(assigned_program_id=p.program.program.id)
     #program_progress = AssignedProgramUserProgress.objects.filter()
     d1={x.category:x.number_of_questions for x in program_goal}
     pool=[]
     ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
-    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig),'DEFAULT': FixedQuestionLogic(QuestionSource()  }
-    for i im d1.items():
-        pool.extend( i[1]*)
+    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig),'DEFAULT': FixedQuestionLogic(QuestionSource())  }
+    for i in d1.items():
+        pool.extend( i[1]*[  switcher[i[0]] if i[0] in switcher else  FixedQuestionLogic(QuestionSource()) ])
 
-
+    #return HttpResponse(str(p.program.id))
     # get next question from the program
 
 
     # question created
-    question_str,question_voice,ans_str,instructions = np.random.choice(ml).get_random_string()
+    question_str,question_voice,ans_str,instructions = np.random.choice(pool).get_random_string()
     openStatus = QuestionStatus.OPENED
     question = Question.create(question_str,openStatus)
     question.save()
