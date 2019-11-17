@@ -2,10 +2,10 @@ import numpy as np
 from django.shortcuts import render,render_to_response
 from .forms import *
 from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLog,QuestionStatus,QuestionEvent,FixedQuestion
-from .models import AssignedProgram,AssignedProgramCategory,AssignedProgramUser,AssignedProgramUserProgress,UserActiveProgramContext
-from .models import ProgramStatus
+from .models import AssignedProgram,AssignedProgramCategory,AssignedProgramUser,UserActiveProgramContext
+from .models import ProgramStatus,QuestionCategory
 from django.http import HttpResponse,HttpRequest,Http404
-from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator,QuestionSource,FixedQuestionLogic
+from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathGameConfig,MathGameLogic,MathAdditionProblemGenerator,MathMultProblemGenerator,MathDivProblemGenerator,MathTimeProblemGenerator,QuestionSourceAll,FixedQuestionLogic,QuestionSourceCategory
 import jsons
 from datetime import datetime
 from django.db.models import Q
@@ -16,7 +16,7 @@ generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
 
-ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
+ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
 #ml = [MathGameLogic(mtconfig)]
 #ml = [FixedQuestionLogic(QuestionSource())]
 
@@ -59,7 +59,7 @@ def get_user_finished_program(user):
 
 
 def get_user_program_progress(user,program):
-    return AssignedProgramUserProgress.objects.filter(user_id=user.id).filter(program_id=program.id)
+    pass#return AssignedProgramUserProgress.objects.filter(user_id=user.id).filter(program_id=program.id)
 
 def get_program(prog_user_id):
     return AssignedProgramUser.objects.get(id=prog_user_id)
@@ -136,12 +136,11 @@ def user_session(request):
     user_session = get_session(request)
     if not user_session: 
         return  render1(request,"Not logged in!",{},True)
-    #','.join(user_session.viewed_questions
     
     qq=UserMemoryQuestionHistory.objects.order_by('time_stamp').filter(user_id=user_session.user_id)
     qq = UserMemoryQuestionHistory.get_for_date(user_session.user_id,datetime.now())
 
-    context={'user_name' : user_session.user_name, 'question_list':qq,'question_list1':user_session.viewed_questions }
+    context={'user_name' : user_session.user_name, 'question_list':qq}
     return render1(request,'memorygame/user_session.html',context)
 
 def server(request):
@@ -154,6 +153,34 @@ def server(request):
 def get_next_question(user_program):
     # selected unfinished categories 
     pass
+
+def log_question(request,question_text,question,user_answer,log_event, was_correct):
+    user1 = get_user(request)
+    questionlog = QuestionLog.create(question,log_event,user1)
+    questionlog.save()
+
+    # program progress
+    active_user_program = get_active_user_program(user1)
+
+    # user history
+    h=UserMemoryQuestionHistory.objects.filter(question_log__question__id=questionlog.question.id)
+
+    if not h:
+        h=UserMemoryQuestionHistory()
+    else:
+        h=h[0]
+
+    h.user = user1
+    h.question_log = questionlog
+    h.program_user = active_user_program.program
+    h.question = question_text
+    h.was_correct = was_correct
+    h.user_answer = user_answer
+    h.save()
+
+
+
+
 
 # question presented here
 def question(request):
@@ -169,13 +196,17 @@ def question(request):
     program_goal = AssignedProgramCategory.objects.filter(assigned_program_id=p.program.program.id)
     #program_progress = AssignedProgramUserProgress.objects.filter()
     d1={x.category:x.number_of_questions for x in program_goal}
-    pool=[]
-    ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSource())]
-    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig),'DEFAULT': FixedQuestionLogic(QuestionSource())  }
-    for i in d1.items():
-        pool.extend( i[1]*[  switcher[i[0]] if i[0] in switcher else  FixedQuestionLogic(QuestionSource()) ])
+    d2={}
+    for y in d1:
+        if y in [x.value for x in [QuestionCategory.CANADIAN_PROVINCES,QuestionCategory.GENERAL,QuestionCategory.GEOGRAPHY]]:
+            d2[y] = QuestionSourceCategory(y)
 
-    #return HttpResponse(str(p.program.id))
+    pool=[]
+    #ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
+    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
+    for i in d1.items():
+        pool.extend( i[1]*[  switcher[i[0]] if i[0] in switcher else  FixedQuestionLogic(d2[i[0]]) ])
+
     # get next question from the program
 
 
@@ -185,17 +216,18 @@ def question(request):
     question = Question.create(question_str,openStatus)
     question.save()
     question_id=question.id
+
     # assign to user
-    questionlog = QuestionLog.create(question,QuestionEvent.ASSIGNED,user)
-    questionlog.save()
+    #questionlog = QuestionLog.create(question,QuestionEvent.ASSIGNED,user)
+    #questionlog.save()
+    # add question history
+
+    log_question(request,question_str,question,'No answer',QuestionEvent.ASSIGNED,0)
 
     form = QuestionForm(\
         initial={'question': question_str,\
              'correct_answer':ans_str,'question_id' : question_id}, auto_id=False)
-    #user_session.viewed_questions.append(question_str)
     request.session['user_id']= user_session.json
-
-    # save question to DB
 
     return render1(request,'memorygame/question_display.html',\
         {'form':form,'question':question_str,'question_voice':question_voice,\
@@ -207,24 +239,17 @@ def question_answer(request):
     user_session = get_session(request)
     if not user_session: 
         return   render1(request,"Not logged in!",{},True)
-
     r = request.POST
     user = get_user(request)
-    
     #get quesiton
     question = get_question(r['question_id'])
     # log answering
     questionlog = QuestionLog.create(question,QuestionEvent.ANSWERING,user)
     questionlog.save()
-
-
     question_str,ans_str,question = r['question'],r['correct_answer'],r['question']
     form = AnswerForm(initial={'question':question,'answer': '', 
     'correct_answer':ans_str,'question_id' : r['question_id']}, auto_id=False)
-    user_session.viewed_questions.append(question_str)
     request.session['user_id']= user_session.json
-
-    # save question to DB
     return render1(request,'memorygame/question_answer.html',{'form':form})
 
     
@@ -236,20 +261,14 @@ def question_process(request):
     context = {'temp':[user_answer,correct_answer],'result' : result,\
         'message':"Question was: {1} The correct answer is {2} . your answer was {0} .".format(user_answer,\
             r['question'],correct_answer)}
-    h=UserMemoryQuestionHistory()
-    h.user = get_user(request)
-    h.question = r['question']
-    h.was_correct = result == 'Correct!'
-    h.user_answer = user_answer
-    h.save()
 
     #get quesiton
     question = get_question(r['question_id'])
-    # log answering
-    questionlog = QuestionLog.create(question,QuestionEvent.ANSWERED,h.user)
-    questionlog.save()
+    log_question(request,r['question'],question,user_answer,QuestionEvent.ANSWERED,result == 'Correct!')
+    
 
     return render1(request,'memorygame/question_answered.html',context)
+
     
 def render1(request,url,context,is_html=False):
     html = url if is_html else render(request,url,context)
@@ -275,12 +294,6 @@ def chain_responses(r):
     for html in r:
         h += html.content.decode()
     return HttpResponse(h)
-
-def test(request):
-    r=request
-    
-    return test2(r)
-    #return chain_responses ([test2(r),test2(r)])
 
 def add_fixed_content(request,response,context,is_html=False):
     html = response

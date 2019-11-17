@@ -1,12 +1,22 @@
 <body>
 
     <h2> Porgram details for {{q.program.name}} </h2>
-        <ol>
-            {% for q in program_list %}
-            <li>
-                <pre> Category: {{q.category}} number of questiond {{q.number_of_questions}}  </pre>
-    
-            </li>
-            {% endfor %}
-        </ol>
-    </body>
+    <ol>
+        {% for q in program_list %}
+        <li>
+            <pre> Category: {{q.category}} number of questiond {{q.number_of_questions}}  </pre>
+
+        </li>
+        {% endfor %}
+    </ol>
+
+    <h2> User progress </h2>
+    <ol>
+        {% for q in program_list %}
+        <li>
+            <pre> Category: {{q.category}} number of questiond {{q.number_of_questions}}  </pre>
+
+        </li>
+        {% endfor %}
+    </ol>
+</body>

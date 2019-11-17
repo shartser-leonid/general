@@ -4,7 +4,7 @@ from jsons import JsonSerializable,KEY_TRANSFORMER_CAMELCASE,KEY_TRANSFORMER_SNA
 from enum import Enum
 from datetime import timedelta
 from random import randrange
-from .models import FixedQuestion
+from .models import FixedQuestion,QuestionCategory
 
 class MemoryLogicConfig:
     def __init__(self,string_lengh):
@@ -142,7 +142,7 @@ class MathGameLogic:
 
 class MemoryLogic:
     def __init__(self,memory_logic_config):
-        self.string_length = memory_logic_config.string_length
+        self.string_length = 5#memory_logic_config.string_length
     
     def get_random_string(self):
         question_voice = self.generate()
@@ -158,22 +158,40 @@ class MemoryLogic:
         letters = set(list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
         digits = set(list('0123456789'))
         sequence = ''
+        ii=0        
         for i in range(self.string_length):
             c = np.random.choice(list(letters))
             n = np.random.choice(list(digits))
-            sequence +=c
-            sequence +=str(n)
-            letters.remove(c)
-            digits.remove(n)
+            if ii<5:
+                sequence +=c
+                letters.remove(c)
+                ii+=1
+            if ii<5:
+                sequence +=str(n)
+                digits.remove(n)
+                ii+=1
+
         return sequence
 
-class QuestionSource:
+class QuestionSourceAll:
     def __init__(self):
         self.questions = FixedQuestion.objects.all()
 
     def get_random_question(self):
         q = np.random.choice(self.questions)
         return q
+
+class QuestionSourceCategory:
+    def __init__(self,category):
+        self.questions = FixedQuestion.objects.filter(category=category)
+
+
+    def get_random_question(self):
+        if len(self.questions)==0:
+            return None
+        q = np.random.choice(self.questions)
+        return q
+
 
 class FixedQuestionLogic:
     def __init__(self,question_source):

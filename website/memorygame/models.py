@@ -20,8 +20,13 @@ class UserLog(models.Model):
 class QuestionCategory(Enum):
     GENERAL = "GENERAL"
     MATH = "MATH"
+    TIME = "TIME"
     MEMORY = "MEMORY"
     GEOGRAPHY = "GEOGRAPHY"
+    CANADIAN_PROVINCES = "CANADIAN_PROVINCES"
+    PROVINCE_CITY = "PROVINCE_CITY"
+
+
     @classmethod
     def choices(cls):
         return tuple((i.name, i.value) for i in cls)
@@ -80,9 +85,37 @@ class QuestionLog(models.Model):
         m.save()
 
 
+class AssignedProgram(models.Model):
+    name = models.CharField(max_length=200)
+    author = models.CharField(max_length=200)
+
+class AssignedProgramCategory(models.Model):
+    assigned_program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
+    number_of_questions = models.IntegerField()
+    category = models.CharField(max_length=200,choices=QuestionCategory.choices()) 
+
+
+class ProgramStatus(Enum):
+    NEW = "NEW"
+    IN_PROCESS = "IN_PROCESS"
+    DONE = "DONE"
+    
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)
+
+class AssignedProgramUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
+    status = models.CharField(max_length=200,choices=ProgramStatus.choices())
+
+
+
 class UserMemoryQuestionHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    program_user = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE,null=True)
     question = models.CharField(max_length=200)
+    question_log = models.ForeignKey(QuestionLog, on_delete=models.CASCADE,null=True)
     user_answer = models.CharField(max_length=200)
     was_correct = models.BooleanField()
     time_stamp = models.DateTimeField(auto_now_add=True, null=True)
@@ -118,33 +151,23 @@ class UserProfileInfo(models.Model):
     def __str__(self):
         return self.user.username
 
-class AssignedProgram(models.Model):
-    name = models.CharField(max_length=200)
-    author = models.CharField(max_length=200)
 
-class AssignedProgramCategory(models.Model):
-    assigned_program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
-    number_of_questions = models.IntegerField()
-    category = models.CharField(max_length=200,choices=QuestionCategory.choices()) 
-
-
-class ProgramStatus(Enum):
-    NEW = "NEW"
-    IN_PROCESS = "IN_PROCESS"
-    DONE = "DONE"
-    
-    @classmethod
-    def choices(cls):
-        return tuple((i.name, i.value) for i in cls)
-
-class AssignedProgramUser(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
-    status = models.CharField(max_length=200,choices=ProgramStatus.choices())
-
+'''
 class AssignedProgramUserProgress(models.Model):
     program_user = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE)
     user_question_history = models.ForeignKey(UserMemoryQuestionHistory, on_delete=models.CASCADE)
+
+    @classmethod
+    def add_record(cls,prog_user,user_quetion_history):
+        m = AssignedProgramUserProgress()
+        m.program_user = prog_user
+        m.user_question_history = user_quetion_history
+        m.save()
+    
+    @classmethod
+    def get_progress(cls,program_user):
+        return AssignedProgramUserProgress.objects.filter(program_user__id=program_user.id)
+'''
 
     
 class UserActiveProgramContext(models.Model):
