@@ -72,13 +72,6 @@ def get_active_user_program(user):
     activep = UserActiveProgramContext.objects.get(user_id=user.id)
     return activep
 
-
-def set_active_user_program(user,program):
-    pass
-
-def get_finished_user_programs(user):
-    pass
-
 def program_view(request):
     user_session = get_session(request)
     if not user_session: 

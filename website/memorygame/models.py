@@ -167,25 +167,7 @@ class UserProfileInfo(models.Model):
     def __str__(self):
         return self.user.username
 
-
-'''
-class AssignedProgramUserProgress(models.Model):
-    program_user = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE)
-    user_question_history = models.ForeignKey(UserMemoryQuestionHistory, on_delete=models.CASCADE)
-
-    @classmethod
-    def add_record(cls,prog_user,user_quetion_history):
-        m = AssignedProgramUserProgress()
-        m.program_user = prog_user
-        m.user_question_history = user_quetion_history
-        m.save()
-    
-    @classmethod
-    def get_progress(cls,program_user):
-        return AssignedProgramUserProgress.objects.filter(program_user__id=program_user.id)
-'''
-
-    
+  
 class UserActiveProgramContext(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     program = models.ForeignKey(AssignedProgramUser, on_delete=models.CASCADE)
