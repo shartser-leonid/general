@@ -204,6 +204,8 @@ class FixedQuestionLogic:
         answer = qs.answer
         instructions = 'Answer the following question.'+question_text
         return question_text,question_voice, answer,instructions
+    def __str__(self):
+        return "I'm fixed question"
 
     
 

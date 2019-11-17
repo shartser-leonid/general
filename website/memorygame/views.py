@@ -116,7 +116,8 @@ def program_progress(request,user_prog_id):
     program = get_program(user_prog_id)
     prgram_list = AssignedProgramCategory.objects.filter(assigned_program_id=program.program.id)
 
-    context={'program_list':prgram_list}
+    progress_list = UserMemoryQuestionHistory.get_progres(program)
+    context={'program_list':prgram_list,'progress_list':progress_list}
     return render1(request,'memorygame/program_progress.html',context)
 
 
@@ -179,9 +180,6 @@ def log_question(request,question_text,question,user_answer,log_event, was_corre
     h.save()
 
 
-
-
-
 # question presented here
 def question(request):
     ServerLog.add_message('question')
@@ -205,28 +203,28 @@ def question(request):
     #ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
     switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
     for i in d1.items():
-        pool.extend( i[1]*[  switcher[i[0]] if i[0] in switcher else  FixedQuestionLogic(d2[i[0]]) ])
+        pool.extend( i[1]*[  (switcher[i[0]],i[0]) if i[0] in switcher else (FixedQuestionLogic(d2[i[0]]),i[0]) ])
 
     # get next question from the program
 
 
     # question created
-    question_str,question_voice,ans_str,instructions = np.random.choice(pool).get_random_string()
-    openStatus = QuestionStatus.OPENED
-    question = Question.create(question_str,openStatus)
+    question_generator = pool[np.random.choice(len(pool))]
+    question_category= question_generator[1]
+   
+    question_str,question_voice,ans_str,instructions = question_generator[0].get_random_string()
+    open_status = QuestionStatus.OPENED
+    question = Question.create(question_str,open_status,ans_str,question_category)
     question.save()
     question_id=question.id
 
-    # assign to user
-    #questionlog = QuestionLog.create(question,QuestionEvent.ASSIGNED,user)
-    #questionlog.save()
-    # add question history
 
     log_question(request,question_str,question,'No answer',QuestionEvent.ASSIGNED,0)
 
     form = QuestionForm(\
         initial={'question': question_str,\
-             'correct_answer':ans_str,'question_id' : question_id}, auto_id=False)
+                 'correct_answer':ans_str,\
+                 'question_id' : question_id}, auto_id=False)
     request.session['user_id']= user_session.json
 
     return render1(request,'memorygame/question_display.html',\

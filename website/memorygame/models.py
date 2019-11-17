@@ -2,6 +2,9 @@ from django.db import models
 from datetime import datetime
 from django.db.models import Q
 from enum import Enum
+from django.db.models import Count, F, Value
+from django.db.models.functions import Length, Upper
+from django.db.models import Sum
 
 class User(models.Model):
     user_name = models.CharField(max_length=200)
@@ -18,6 +21,7 @@ class UserLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')
 
 class QuestionCategory(Enum):
+    NO_CATEGORY = "NO_CATEGORY"
     GENERAL = "GENERAL"
     MATH = "MATH"
     TIME = "TIME"
@@ -59,12 +63,14 @@ class QuestionEvent(Enum):
 
 class Question(models.Model):
     question = models.CharField(max_length=200)
+    answer = models.CharField(max_length=200,null=True)
+    category = models.CharField(max_length=200,choices=QuestionCategory.choices(),null=True) 
     time_stamp = models.DateTimeField(auto_now_add=True, null=True)
     status = models.CharField(max_length=200,choices=QuestionStatus.choices()) 
     
     @classmethod
-    def create(cls,q,s):
-        question = cls(question=q,status=s)
+    def create(cls,q,s,a,c):
+        question = cls(question=q,status=s,answer=a,category=c)
         return question
 
 class QuestionLog(models.Model):
@@ -129,6 +135,10 @@ class UserMemoryQuestionHistory(models.Model):
         return UserMemoryQuestionHistory.objects.filter(time_stamp__year=date.year,\
             time_stamp__month=date.month,
             time_stamp__day=date.day).select_related().filter(user_id=user_id1)
+    
+    @classmethod
+    def get_progres (cls,program_user):
+        return cls.objects.filter(program_user_id=program_user.id).values('question','was_correct','question_log__question__question')
 
 class ServerLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')

@@ -4,7 +4,7 @@
     <ol>
         {% for q in program_list %}
         <li>
-            <pre> Category: {{q.category}} number of questiond {{q.number_of_questions}}  </pre>
+            <pre> Category: {{q.category}} number of questions {{q.number_of_questions}}  </pre>
 
         </li>
         {% endfor %}
@@ -12,9 +12,9 @@
 
     <h2> User progress </h2>
     <ol>
-        {% for q in program_list %}
+        {% for q in progress_list %}
         <li>
-            <pre> Category: {{q.category}} number of questiond {{q.number_of_questions}}  </pre>
+            <pre> Data: {{q}}    </pre>
 
         </li>
         {% endfor %}
