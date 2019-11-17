@@ -99,31 +99,6 @@ def server(request):
     context={'server' : list(zip(d.keys(),d.values())) }
     return render1(request,'memorygame/server.html',context)
 
-def log_question(request,question_text,question,user_answer,log_event, was_correct):
-    user1 = get_user(request)
-    questionlog = QuestionLog.create(question,log_event,user1)
-    questionlog.save()
-
-    # program progress
-    active_user_program = get_active_user_program(user1)
-
-    # user history
-    h=UserMemoryQuestionHistory.objects.filter(question_log__question__id=questionlog.question.id)
-
-    if not h:
-        h=UserMemoryQuestionHistory()
-    else:
-        h=h[0]
-    # update user question history
-    h.user = user1
-    h.question_log = questionlog
-    h.program_user = active_user_program.program
-    h.question = question_text
-    h.was_correct = was_correct
-    h.user_answer = user_answer
-    h.save()
-
-
 # question presented here
 def question(request):
     ServerLog.add_message('question')
@@ -133,30 +108,23 @@ def question(request):
     user = get_user(request)
     # get active program
     p = get_active_user_program(user)
-    program_goal = get_program_goal(p)
+    program_categories = get_program_categories(p)
+    question, question_str, ans_str, question_voice, instructions = get_question_data(program_categories)
 
-    question_generator, question_category = get_question_generator(program_goal)
-    question_str,question_voice,ans_str,instructions = question_generator[0].get_random_string()
-    open_status = QuestionStatus.OPENED
-    question = Question.create(question_str,open_status,ans_str,question_category)
-    question.save()
-    question_id=question.id
-
-
+    # add question to DB
     log_question(request,question_str,question,'No answer',QuestionEvent.ASSIGNED,0)
 
     form = QuestionForm(\
         initial={'question': question_str,\
                  'correct_answer':ans_str,\
-                 'question_id' : question_id}, auto_id=False)
+                 'question_id' : question.id}, auto_id=False)
     
     request.session['user_id']= user_session.json
 
     return render1(request,'memorygame/question_display.html',\
         {'form':form,'question':question_str,'question_voice':question_voice,\
             'question_instructions':instructions,
-            'question_id':question_id},wrap_html='wrap_html_question')
-
+            'question_id':question.id},wrap_html='wrap_html_question')
 
 
 def question_answer(request):

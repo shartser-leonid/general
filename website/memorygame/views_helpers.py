@@ -49,4 +49,26 @@ def add_fixed_content(request,response,context,is_html=False,wrap_html='wrap_htm
     context['source'] = html
     return render(request,'memorygame/{}.html'.format(wrap_html),context)
 
+def log_question(request,question_text,question,user_answer,log_event, was_correct):
+    user1 = get_user(request)
+    questionlog = QuestionLog.create(question,log_event,user1)
+    questionlog.save()
 
+    # program progress
+    active_user_program = get_active_user_program(user1)
+
+    # user history
+    h=UserMemoryQuestionHistory.objects.filter(question_log__question__id=questionlog.question.id)
+
+    if not h:
+        h=UserMemoryQuestionHistory()
+    else:
+        h=h[0]
+    # update user question history
+    h.user = user1
+    h.question_log = questionlog
+    h.program_user = active_user_program.program
+    h.question = question_text
+    h.was_correct = was_correct
+    h.user_answer = user_answer
+    h.save()
