@@ -28,3 +28,5 @@ def get_program_progress(prog_user_id):
 def get_active_user_program(user):
     activep = UserActiveProgramContext.objects.get(user_id=user.id)
     return activep
+def get_program_goal(active_user_program):
+    return AssignedProgramCategory.objects.filter(assigned_program_id=active_user_program.program.program.id)

@@ -42,7 +42,7 @@ def program_view(request):
 def program_activate(request,user_prog_id):
     user_session = get_session(request)
     if not user_session: 
-        return  render1(request,"Not logged in!",{},True)
+        return render1(request,"Not logged in!",{},True)
 
     user = get_user(request)
     program = get_program(user_prog_id)
@@ -104,10 +104,6 @@ def server(request):
     context={'server' : list(zip(d.keys(),d.values())) }
     return render1(request,'memorygame/server.html',context)
 
-def get_next_question(user_program):
-    # selected unfinished categories 
-    pass
-
 def log_question(request,question_text,question,user_answer,log_event, was_correct):
     user1 = get_user(request)
     questionlog = QuestionLog.create(question,log_event,user1)
@@ -123,7 +119,7 @@ def log_question(request,question_text,question,user_answer,log_event, was_corre
         h=UserMemoryQuestionHistory()
     else:
         h=h[0]
-
+    # update user question history
     h.user = user1
     h.question_log = questionlog
     h.program_user = active_user_program.program
@@ -139,12 +135,11 @@ def question(request):
     user_session = get_session(request)
     if not user_session: 
         return render1(request,"Not logged in!",{},True)
-
     user = get_user(request)
-
     # get active program
     p = get_active_user_program(user)
-    program_goal = AssignedProgramCategory.objects.filter(assigned_program_id=p.program.program.id)
+    program_goal = get_program_goal(p)
+
     #program_progress = AssignedProgramUserProgress.objects.filter()
     d1={x.category:x.number_of_questions for x in program_goal}
     d2={}
@@ -153,7 +148,6 @@ def question(request):
             d2[y] = QuestionSourceCategory(y)
 
     pool=[]
-    #ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
     switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
     for i in d1.items():
         pool.extend( i[1]*[  (switcher[i[0]],i[0]) if i[0] in switcher else (FixedQuestionLogic(d2[i[0]]),i[0]) ])
@@ -184,6 +178,7 @@ def question(request):
         {'form':form,'question':question_str,'question_voice':question_voice,\
             'question_instructions':instructions,
             'question_id':question_id},wrap_html='wrap_html_question')
+
 
 def question_answer(request):
     ServerLog.add_message('question_answer')
@@ -220,26 +215,6 @@ def question_process(request):
     
 
     return render1(request,'memorygame/question_answered.html',context)
-
-    
-def render1(request,url,context,is_html=False,wrap_html='wrap_html'):
-    html = url if is_html else render(request,url,context)
-    context['user_name']='No user'
-    context['program']='No program'
-    try:
-        user=get_user(request)
-        context['user_name'] = user.user_name
-        context['program'] = get_active_user_program(user).program.program.name
-    except:
-        pass
-    return add_fixed_content(request,html,context,is_html,wrap_html)
-    
-def add_fixed_content(request,response,context,is_html=False,wrap_html='wrap_html'):
-    html = response
-    if not is_html:
-        html = html.content.decode()
-    context['source'] = html
-    return render(request,'memorygame/{}.html'.format(wrap_html),context)
 
 def login_screen(request):
     if request.method == 'POST':

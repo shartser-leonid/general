@@ -9,7 +9,7 @@ from memorygame.gamelogic import MemoryLogic,MemoryLogicConfig,UserSession,MathG
 import jsons
 from datetime import datetime
 from django.db.models import Q
-
+from .models_helper import *
 
 
 def get_session(request):
@@ -29,5 +29,24 @@ def get_user(request):
     user = User.objects.get(id=user_session.user_id)
     return user
 
+
+def render1(request,url,context,is_html=False,wrap_html='wrap_html'):
+    html = url if is_html else render(request,url,context)
+    context['user_name']='No user'
+    context['program']='No program'
+    try:
+        user=get_user(request)
+        context['user_name'] = user.user_name
+        context['program'] = get_active_user_program(user).program.program.name
+    except:
+        pass
+    return add_fixed_content(request,html,context,is_html,wrap_html)
+    
+def add_fixed_content(request,response,context,is_html=False,wrap_html='wrap_html'):
+    html = response
+    if not is_html:
+        html = html.content.decode()
+    context['source'] = html
+    return render(request,'memorygame/{}.html'.format(wrap_html),context)
 
 
