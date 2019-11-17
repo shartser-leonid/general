@@ -238,3 +238,24 @@ def mark_to_letter(mark):
             }
     for i in marks:
         if mark>=i[0] and mark<i[1]: return marks[i]
+
+
+generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
+    MathDivProblemGenerator,MathTimeProblemGenerator]
+mlconfig = MemoryLogicConfig(2)
+mtconfig = MathGameConfig(generator_set)
+
+def get_question_generator(program_goal):
+    d1={x.category:x.number_of_questions for x in program_goal}
+    d2={}
+    for y in d1:
+        if y in [x.value for x in [QuestionCategory.CANADIAN_PROVINCES,QuestionCategory.GENERAL,QuestionCategory.GEOGRAPHY]]:
+            d2[y] = QuestionSourceCategory(y)
+
+    pool=[]
+    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
+    for i in d1.items():
+        pool.extend( i[1]*[  (switcher[i[0]],i[0]) if i[0] in switcher else (FixedQuestionLogic(d2[i[0]]),i[0]) ])
+    question_generator = pool[np.random.choice(len(pool))]
+    question_category= question_generator[1]
+    return question_generator, question_category

@@ -10,15 +10,10 @@ import jsons
 from datetime import datetime
 from django.db.models import Q
 
-from .gamelogic import mark_to_letter
+from .gamelogic import mark_to_letter,get_question_generator
 from .views_helpers import *
 from .models_helper import *
 
-generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
-    MathDivProblemGenerator,MathTimeProblemGenerator]
-mlconfig = MemoryLogicConfig(2)
-mtconfig = MathGameConfig(generator_set)
-ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
 
 def index(request):
     context={}
@@ -140,25 +135,7 @@ def question(request):
     p = get_active_user_program(user)
     program_goal = get_program_goal(p)
 
-    #program_progress = AssignedProgramUserProgress.objects.filter()
-    d1={x.category:x.number_of_questions for x in program_goal}
-    d2={}
-    for y in d1:
-        if y in [x.value for x in [QuestionCategory.CANADIAN_PROVINCES,QuestionCategory.GENERAL,QuestionCategory.GEOGRAPHY]]:
-            d2[y] = QuestionSourceCategory(y)
-
-    pool=[]
-    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
-    for i in d1.items():
-        pool.extend( i[1]*[  (switcher[i[0]],i[0]) if i[0] in switcher else (FixedQuestionLogic(d2[i[0]]),i[0]) ])
-
-    # get next question from the program
-
-
-    # question created
-    question_generator = pool[np.random.choice(len(pool))]
-    question_category= question_generator[1]
-   
+    question_generator, question_category = get_question_generator(program_goal)
     question_str,question_voice,ans_str,instructions = question_generator[0].get_random_string()
     open_status = QuestionStatus.OPENED
     question = Question.create(question_str,open_status,ans_str,question_category)
@@ -172,12 +149,14 @@ def question(request):
         initial={'question': question_str,\
                  'correct_answer':ans_str,\
                  'question_id' : question_id}, auto_id=False)
+    
     request.session['user_id']= user_session.json
 
     return render1(request,'memorygame/question_display.html',\
         {'form':form,'question':question_str,'question_voice':question_voice,\
             'question_instructions':instructions,
             'question_id':question_id},wrap_html='wrap_html_question')
+
 
 
 def question_answer(request):
@@ -193,8 +172,11 @@ def question_answer(request):
     questionlog = QuestionLog.create(question,QuestionEvent.ANSWERING,user)
     questionlog.save()
     question_str,ans_str,question = r['question'],r['correct_answer'],r['question']
-    form = AnswerForm(initial={'question':question,'answer': '', 
-    'correct_answer':ans_str,'question_id' : r['question_id']}, auto_id=False)
+    form = AnswerForm(initial={\
+        'question':question,\
+        'answer': '',\
+        'correct_answer':ans_str,\
+        'question_id' : r['question_id']}, auto_id=False)
     request.session['user_id']= user_session.json
     return render1(request,'memorygame/question_answer.html',{'form':form},\
         wrap_html='wrap_html_question')
@@ -205,9 +187,11 @@ def question_process(request):
     correct_answer = r['correct_answer']
     user_answer = r['answer']
     result = 'Correct!' if str(correct_answer).lower()==str(user_answer).lower() else 'Wrong.' 
-    context = {'temp':[user_answer,correct_answer],'result' : result,\
+    context = {\
+        'temp':[user_answer,correct_answer],\
+        'result' : result,\
         'message':"Question was: {1} The correct answer is {2} . your answer was {0} .".format(user_answer,\
-            r['question'],correct_answer)}
+        r['question'],correct_answer)}
 
     #get quesiton
     question = get_question(r['question_id'])
