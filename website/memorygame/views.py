@@ -10,67 +10,20 @@ import jsons
 from datetime import datetime
 from django.db.models import Q
 
+from .gamelogic import mark_to_letter
+from .views_helpers import *
+from .models_helper import *
+
 generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
     MathDivProblemGenerator,MathTimeProblemGenerator]
-#generator_set = [MathTimeProblemGenerator]
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
-
 ml = [MemoryLogic(mlconfig),MathGameLogic(mtconfig),FixedQuestionLogic(QuestionSourceAll())]
-#ml = [MathGameLogic(mtconfig)]
-#ml = [FixedQuestionLogic(QuestionSource())]
 
 def index(request):
     context={}
     return render1(request, 'memorygame/index.html', context)
 
-def get_session(request):
-    if 'user_id' not in request.session:
-        return None
-    try:
-        user_session=UserSession.from_json(request.session['user_id'])
-    except:
-        del request.session['user_id']
-        return None
-    return user_session
-    
-def get_user(request):
-    user_session = get_session(request)
-    if not user_session: 
-        return  render1(request,"Not logged in!",{},True)
-    user = User.objects.get(id=user_session.user_id)
-    return user
-
-def get_question(question_id):
-    try:
-        user = Question.objects.get(id=int(float(question_id)))
-    except:
-        raise Exception(question_id)
-
-    return user
-
-def get_user_assigned_program(user):
-    assigned = AssignedProgramUser.objects.filter(user_id=user.id).filter(~Q(status=ProgramStatus.DONE.value))
-    return assigned
-
-def get_user_finished_program(user):
-    assigned = AssignedProgramUser.objects.filter(user_id=user.id).filter(status=ProgramStatus.DONE.value)
-    return assigned
-
-
-def get_user_program_progress(user,program):
-    pass#return AssignedProgramUserProgress.objects.filter(user_id=user.id).filter(program_id=program.id)
-
-def get_program(prog_user_id):
-    return AssignedProgramUser.objects.get(id=prog_user_id)
-
-def get_program_progress(prog_user_id):
-    return AssignedProgramUser.objects.get(id=prog_user_id)
-
-
-def get_active_user_program(user):
-    activep = UserActiveProgramContext.objects.get(user_id=user.id)
-    return activep
 
 def program_view(request):
     user_session = get_session(request)
@@ -100,23 +53,7 @@ def program_activate(request,user_prog_id):
     context={'user_name' : user_session.user_name,  'program' : program.program.name }
     return render1(request,'memorygame/program_activated.html',context)
 
-def mark_to_letter(mark):
-    marks={(95,101) : 'A+',\
-            (90,95) : 'A',\
-            (81,90) : 'A-',\
-            (78,81) : 'B+',\
-            (75,78) : 'B',\
-            (72,75) : 'B-',\
-            (68,72) : 'C+',\
-            (65,68) : 'C',\
-            (62,65) : 'C-',\
-            (58,62) : 'D+',\
-            (55,58) : 'D',\
-            (52,55) : 'D-',\
-            (-1,52) : 'R',\
-            }
-    for i in marks:
-        if mark>=i[0] and mark<i[1]: return marks[i]
+
     
 def program_progress(request,user_prog_id):
     user_session = get_session(request)
@@ -297,19 +234,6 @@ def render1(request,url,context,is_html=False,wrap_html='wrap_html'):
         pass
     return add_fixed_content(request,html,context,is_html,wrap_html)
     
-
-def test2(request):
-    html1="<script src='https://code.responsivevoice.org/responsivevoice.js'+';'></script>"
-    html2="<script>responsiveVoice.speak('Thank you!');</script>" 
-    html3="<script>responsiveVoice.speak('Wilokomen!');</script>" 
-    return HttpResponse(html1+html2+html3+html2)
-
-def chain_responses(r):
-    h=''
-    for html in r:
-        h += html.content.decode()
-    return HttpResponse(h)
-
 def add_fixed_content(request,response,context,is_html=False,wrap_html='wrap_html'):
     html = response
     if not is_html:
