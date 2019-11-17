@@ -2,7 +2,7 @@ from .models import User,ServerLog,UserMemoryQuestionHistory,Question,QuestionLo
 from .models import AssignedProgram,AssignedProgramCategory,AssignedProgramUser,UserActiveProgramContext
 from .models import ProgramStatus,QuestionCategory
 from django.db.models import Q
-
+from .gamelogic import get_question_generator
 
 def get_question(question_id):
     try:

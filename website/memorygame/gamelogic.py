@@ -259,3 +259,4 @@ def get_question_generator(assigned_program_categories):
     question_generator = pool[np.random.choice(len(pool))]
     question_category= question_generator[1]
     return question_generator, question_category
+
