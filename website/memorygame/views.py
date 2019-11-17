@@ -107,6 +107,24 @@ def program_activate(request,user_prog_id):
     context={'user_name' : user_session.user_name,  'program' : program.program.name }
     return render1(request,'memorygame/program_activated.html',context)
 
+def mark_to_letter(mark):
+    marks={(95,101) : 'A+',\
+            (90,95) : 'A',\
+            (81,90) : 'A-',\
+            (78,81) : 'B+',\
+            (75,78) : 'B',\
+            (72,75) : 'B-',\
+            (68,72) : 'C+',\
+            (65,68) : 'C',\
+            (62,65) : 'C-',\
+            (58,62) : 'D+',\
+            (55,58) : 'D',\
+            (52,55) : 'D-',\
+            (-1,52) : 'R',\
+            }
+    for i in marks:
+        if mark>=i[0] and mark<i[1]: return marks[i]
+    
 def program_progress(request,user_prog_id):
     user_session = get_session(request)
     if not user_session: 
@@ -117,6 +135,11 @@ def program_progress(request,user_prog_id):
     prgram_list = AssignedProgramCategory.objects.filter(assigned_program_id=program.program.id)
 
     progress_list = UserMemoryQuestionHistory.get_progres(program)
+    for q in progress_list:
+        percent=100*q['correct_ones']/q['question_per_category']
+        q['mark'] = percent
+        q['mark_l'] = mark_to_letter(percent)
+
     context={'program_list':prgram_list,'progress_list':progress_list}
     return render1(request,'memorygame/program_progress.html',context)
 

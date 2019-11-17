@@ -138,8 +138,14 @@ class UserMemoryQuestionHistory(models.Model):
     
     @classmethod
     def get_progres (cls,program_user):
-        return cls.objects.filter(program_user_id=program_user.id).values('question','was_correct','question_log__question__question')
-
+        d1= cls.objects.filter(program_user_id=program_user.id)\
+            .values('question_log__question__category')\
+            .annotate(\
+                question_per_category=Count('id'),\
+                correct_ones=Count('was_correct',filter=Q(was_correct=True))\
+                    )
+        
+        return d1
 class ServerLog(models.Model):
     time_stamp = models.DateTimeField('time stamp')
     message = models.CharField(max_length=200)
