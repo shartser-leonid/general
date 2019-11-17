@@ -253,7 +253,7 @@ def question(request):
     return render1(request,'memorygame/question_display.html',\
         {'form':form,'question':question_str,'question_voice':question_voice,\
             'question_instructions':instructions,
-            'question_id':question_id})
+            'question_id':question_id},wrap_html='wrap_html_question')
 
 def question_answer(request):
     ServerLog.add_message('question_answer')
@@ -271,7 +271,8 @@ def question_answer(request):
     form = AnswerForm(initial={'question':question,'answer': '', 
     'correct_answer':ans_str,'question_id' : r['question_id']}, auto_id=False)
     request.session['user_id']= user_session.json
-    return render1(request,'memorygame/question_answer.html',{'form':form})
+    return render1(request,'memorygame/question_answer.html',{'form':form},\
+        wrap_html='wrap_html_question')
 
     
 def question_process(request):
@@ -291,7 +292,7 @@ def question_process(request):
     return render1(request,'memorygame/question_answered.html',context)
 
     
-def render1(request,url,context,is_html=False):
+def render1(request,url,context,is_html=False,wrap_html='wrap_html'):
     html = url if is_html else render(request,url,context)
     context['user_name']='No user'
     context['program']='No program'
@@ -301,7 +302,7 @@ def render1(request,url,context,is_html=False):
         context['program'] = get_active_user_program(user).program.program.name
     except:
         pass
-    return add_fixed_content(request,html,context,is_html)
+    return add_fixed_content(request,html,context,is_html,wrap_html)
     
 
 def test2(request):
@@ -316,12 +317,12 @@ def chain_responses(r):
         h += html.content.decode()
     return HttpResponse(h)
 
-def add_fixed_content(request,response,context,is_html=False):
+def add_fixed_content(request,response,context,is_html=False,wrap_html='wrap_html'):
     html = response
     if not is_html:
         html = html.content.decode()
     context['source'] = html
-    return render(request,'memorygame/wrap_html.html',context)
+    return render(request,'memorygame/{}.html'.format(wrap_html),context)
 
 def login_screen(request):
     if request.method == 'POST':
