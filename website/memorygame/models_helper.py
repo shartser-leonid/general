@@ -31,7 +31,7 @@ def get_active_user_program(user):
 def get_program_categories(active_user_program):
     return AssignedProgramCategory.objects.filter(assigned_program_id=active_user_program.program.program.id)
 
-def get_question_data(program_categories):
+def create_new_question(program_categories):
     question_generator, question_category = get_question_generator(program_categories)
     question_str,question_voice,ans_str,instructions = question_generator[0].get_random_string()
     open_status = QuestionStatus.OPENED

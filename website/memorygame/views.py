@@ -109,7 +109,7 @@ def question(request):
     # get active program
     p = get_active_user_program(user)
     program_categories = get_program_categories(p)
-    question, question_str, ans_str, question_voice, instructions = get_question_data(program_categories)
+    question, question_str, ans_str, question_voice, instructions = create_new_question(program_categories)
 
     # add question to DB
     log_question(request,question_str,question,'No answer',QuestionEvent.ASSIGNED,0)
