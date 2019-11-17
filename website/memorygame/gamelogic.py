@@ -245,8 +245,8 @@ generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
 
-def get_question_generator(program_goal):
-    d1={x.category:x.number_of_questions for x in program_goal}
+def get_question_generator(assigned_program_categories):
+    d1={x.category:x.number_of_questions for x in assigned_program_categories}
     d2={}
     for y in d1:
         if y in [x.value for x in [QuestionCategory.CANADIAN_PROVINCES,QuestionCategory.GENERAL,QuestionCategory.GEOGRAPHY]]:
