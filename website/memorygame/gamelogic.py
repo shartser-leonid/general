@@ -26,6 +26,18 @@ class MathAdditionProblem:
     def solution(self):
         return self.a+self.b
 
+class MathSubtractionProblem:
+    def __init__(self,a,b):
+        self.a=a
+        self.b=b
+    def generate(self):
+        return "Solve the additon problem: {} - {} = ?".format(self.a+self.b,self.b)
+    def instructions(self):
+        return "Solve the additon problem: {} - {} = ?".format(self.a+self.b,self.b)
+    def solution(self):
+        return self.a
+
+
 class MathMultProblem:
     def __init__(self,a,b):
         self.a=a
@@ -106,6 +118,11 @@ class DisplayProblem:
 class MathAdditionProblemGenerator:
     def generate(self):
         return MathAdditionProblem(np.random.randint(1000),np.random.randint(1000))
+
+class MathSubtractionProblemGenerator:
+    def generate(self):
+        return MathSubtractionProblem(np.random.randint(1000),np.random.randint(1000))
+
 
 class MathMultProblemGenerator:
     def generate(self):
@@ -240,8 +257,9 @@ def mark_to_letter(mark):
         if mark>=i[0] and mark<i[1]: return marks[i]
 
 
-generator_set = [MathAdditionProblemGenerator,MathMultProblemGenerator,\
+generator_set = [MathAdditionProblemGenerator,MathSubtractionProblemGenerator,MathMultProblemGenerator,\
     MathDivProblemGenerator,MathTimeProblemGenerator]
+
 mlconfig = MemoryLogicConfig(2)
 mtconfig = MathGameConfig(generator_set)
 
@@ -253,7 +271,15 @@ def get_question_generator(assigned_program_categories):
             d2[y] = QuestionSourceCategory(y)
 
     pool=[]
-    switcher={ 'MATH' : MathGameLogic(mtconfig),'MEMORY':MemoryLogic(mlconfig)  }
+    switcher={\
+        QuestionCategory.MATH.value : MathGameLogic(mtconfig),\
+        QuestionCategory.MEMORY.value:MemoryLogic(mlconfig),\
+        QuestionCategory.TIME.value: MathGameLogic(MathGameConfig([MathTimeProblemGenerator])),\
+        QuestionCategory.MULTIPLICATION.value: MathGameLogic(MathGameConfig([MathMultProblemGenerator])),\
+        QuestionCategory.DIVISION.value: MathGameLogic(MathGameConfig([MathDivProblemGenerator])),\
+        QuestionCategory.ADDITION.value: MathGameLogic(MathGameConfig([MathAdditionProblemGenerator])),\
+        QuestionCategory.SUBTRACTION.value: MathGameLogic(MathGameConfig([MathSubtractionProblemGenerator])),\
+                   }
     for i in d1.items():
         pool.extend( i[1]*[  (switcher[i[0]],i[0]) if i[0] in switcher else (FixedQuestionLogic(d2[i[0]]),i[0]) ])
     question_generator = pool[np.random.choice(len(pool))]
