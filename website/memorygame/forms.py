@@ -18,5 +18,5 @@ class QuestionForm(forms.Form):
 class AnswerForm(forms.Form):
     question_id = forms.IntegerField(widget=forms.HiddenInput())
     question = forms.CharField(widget=forms.HiddenInput())
-    answer = forms.CharField(initial='',widget=forms.TextInput(attrs={'autocomplete': 'off'}))
+    answer = forms.CharField(initial='',widget=forms.TextInput(attrs={'autocomplete': 'off','autofocus': 'autofocus'}))
     correct_answer = forms.CharField(widget=forms.HiddenInput())
