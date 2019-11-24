@@ -10,6 +10,9 @@ class User(models.Model):
     user_name = models.CharField(max_length=200)
     user_password = models.CharField(max_length=200)
     time_stamp = models.DateTimeField('time stamp')
+    def __str__(self):
+        return self.user_name
+
 
 class UserLogAction(models.Model):
     action = models.CharField(max_length=200) # login,logout,etc
@@ -98,11 +101,17 @@ class QuestionLog(models.Model):
 class AssignedProgram(models.Model):
     name = models.CharField(max_length=200)
     author = models.CharField(max_length=200)
+    def __str__(self):
+        return self.name
+
 
 class AssignedProgramCategory(models.Model):
     assigned_program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
     number_of_questions = models.IntegerField()
-    category = models.CharField(max_length=200,choices=QuestionCategory.choices()) 
+    category = models.CharField(max_length=200,choices=QuestionCategory.choices())
+    def __str__(self):
+        return self.assigned_program.name+":"+self.category
+
 
 
 class ProgramStatus(Enum):
@@ -118,6 +127,9 @@ class AssignedProgramUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     program = models.ForeignKey(AssignedProgram, on_delete=models.CASCADE)
     status = models.CharField(max_length=200,choices=ProgramStatus.choices())
+    def __str__(self):
+        return self.user.user_name+":"+self.program.name
+
 
 
 

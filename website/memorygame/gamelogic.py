@@ -5,6 +5,7 @@ from enum import Enum
 from datetime import timedelta
 from random import randrange
 from .models import FixedQuestion,QuestionCategory
+import random
 
 class MemoryLogicConfig:
     def __init__(self,string_lengh):
@@ -180,15 +181,17 @@ class MemoryLogic:
             c = np.random.choice(list(letters))
             n = np.random.choice(list(digits))
             if ii<5:
-                sequence +=c
-                letters.remove(c)
-                ii+=1
-            if ii<5:
                 sequence +=str(n)
                 digits.remove(n)
                 ii+=1
+            if ii<5:
+                sequence +=c
+                letters.remove(c)
+                ii+=1
 
-        return sequence
+        z=list(sequence)
+        random.shuffle(z)
+        return ''.join(z)
 
 class QuestionSourceAll:
     def __init__(self):
