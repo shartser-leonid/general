@@ -9,7 +9,7 @@ from tileset import *
 from camera import *
 from gamelogic import *
 from controlled_character import *
-# just a comment
+# just a comment another one
 
 # Game starts!
 game.start(DISP_W*2, DISP_H*2)
