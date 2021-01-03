@@ -1,0 +1,6 @@
+*.mod
+*.so
+Makefile.cpu
+*.o
+*.a
+*~

@@ -1,0 +1,3 @@
+[submodule "rect_maxvol"]
+	path = rect_maxvol
+	url = https://bitbucket.org/muxas/rect_maxvol

@@ -1,0 +1,6 @@
+*.pyc
+cython_boost/maxvol.*
+*.so
+*f2pywrappers2*
+.DS_STORE
+*.ipynb_checkpoints/*
