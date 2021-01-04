@@ -519,7 +519,7 @@ class TTDiscretization:
 
 
     def get_arrays(self):
-        factor = np.arange(-6,6,self.get_dx())
+        factor = np.arange(-7,7,self.get_dx())
         s0=self.get_discretization(self.ranges.s0)
         return {\
             "spot_base":np.array(self.num_assets*[factor]),\
@@ -529,7 +529,7 @@ class TTDiscretization:
             "sigma":self.get_discretization(self.ranges.sig)}
 
     def get_dx(self):
-        return 0.5
+        return 0.1
     
     def get_dvol(self):
         return self.get_dx()**self.num_assets
@@ -580,6 +580,20 @@ class TTDiscretizationIndex:
         return {'spot_base':spot_base,'s0':s0,'sigma':sigma,'r':r,'t':t}
 
 
+def pdf_multivariate_gauss(x, mu, cov):
+    '''
+    Caculate the multivariate normal density (pdf)
+
+    Keyword arguments:
+        x = numpy array of a "d x 1" sample vector
+        mu = numpy array of a "d x 1" mean vector
+        cov = "numpy array of a d x d" covariance matrix
+    '''
+    
+    part1 = 1 / ( ((2* np.pi)**(len(mu)/2)) * (np.linalg.det(cov)**(1/2)) )
+    part2 = (-1/2) * ((x-mu).T.dot(np.linalg.inv(cov))).dot((x-mu))
+    return float(part1 * np.exp(part2))
+
 class BlackScholesTTMA:
 
     def __init__(self,r,payoff_inp : PayoffInp, indexing : TTDiscretizationIndex):
@@ -596,6 +610,7 @@ class BlackScholesTTMA:
         Sarr=np.array(inp.S)
         print("Sarr",Sarr,"Karr",Karr)
         nAssets=len(inp.S)
+        dist = multivariate_normal()#(mean,cov)
         def payoff_times_density_ind1(ind):
             ivar = self.index_to_var(ind)
             inpsigma = np.array(ivar['sigma'])#np.array(inp.sigma)#
@@ -604,19 +619,19 @@ class BlackScholesTTMA:
             
             rr = inpr*np.ones(nAssets)
             mean=np.zeros(nAssets)
-            mean = mean+ (rr - .5*inpsigma**2)*inpT
+            mean = mean + (rr - .5*inpsigma**2)*inpT
             cov = inp.C.copy()
             sigs=np.concatenate([sig*np.ones([nAssets,1]) for sig in inpsigma],axis=1)
             cov=cov*sigs*sigs.T*inpT
 
-            dist = multivariate_normal(mean,cov)
+            
 
 
             u = np.array(ivar['spot_base'])
             s0 = np.array(ivar['s0'])
             S = s0*np.exp(u)
             SminusK=S-Karr
-            mu=dist.pdf(u)
+            mu=pdf_multivariate_gauss(u,mean,cov)
             payoff = np.amax(np.maximum(SminusK,0,),axis=0)*mu
             return payoff
 
@@ -649,7 +664,8 @@ class BlackScholesTTMA:
 
         print("ndr=",n,d,r)
         x0 = tt.rand(n, d, 1)
-        x1 = rect_cross.cross(self.get_payoff_times_density_ind(inp), x0)#, nswp=8, kickrank=1, rf=2)     
+        x0 = 100.0*x0
+        x1 = rect_cross.cross(self.get_payoff_times_density_ind(inp), x0,nswp=15)#, nswp=8, kickrank=1, rf=2)     
 
         
         endt = time.time()
@@ -730,16 +746,39 @@ print("w=",w1)
 tens=w[2][0]
 #tens[]
 
+
 ind1=TTDiscretizationIndex(disc.get_arrays(),disc.get_dvol())
 
 a1=disc.get_arrays()
+def graph_stuff(a1,tenz):
+    show_by_s=True
+    if show_by_s:
+        inpps = [BlackScholesMCInputMA([s1,5],k,r,t,[.33,.33],C,N) for s1 in a1['s0'][0]]
+        xs=a1['s0'][0]
+        ys_tt=[pricers[2].get_pv(inpp,tenz) for inpp in inpps]
+        ys_mc=[pricers[0].price(inpp) for inpp in inpps]
+        fig = plt.figure()
+        ax = fig.gca()
+        ax.set_xticks(xs)
+        ax.set_yticks(np.arange(0,10,.1))
+        plt.scatter(xs,ys_tt,label="tt")
+        plt.scatter(xs,ys_mc,label="mc")
+        plt.legend()
+        plt.grid()
+        fig.autofmt_xdate()
+        ax.set_xticks(ax.get_xticks()[::2])
+        ax.set_yticks(ax.get_yticks()[::4])
+        fig.tight_layout()
+        plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
+        plt.show()
 
-show_by_s=True
-if show_by_s:
-    inpps = [BlackScholesMCInputMA([s1,10],k,r,t,[.21,.13],C,N) for s1 in a1['s0'][0]]
-    xs=a1['s0'][0]
-    ys_tt=[pricers[2].get_pv(inpp,w[2][0]) for inpp in inpps]
+
+
+    xs=a1['sigma'][0]
+    inpps = [BlackScholesMCInputMA([9,10],k,r,t,[sig,.2],C,N) for sig in xs]
+    ys_tt=[pricers[2].get_pv(inpp,tenz) for inpp in inpps]
     ys_mc=[pricers[0].price(inpp) for inpp in inpps]
+
     fig = plt.figure()
     ax = fig.gca()
     ax.set_xticks(xs)
@@ -750,33 +789,14 @@ if show_by_s:
     plt.grid()
     fig.autofmt_xdate()
     ax.set_xticks(ax.get_xticks()[::2])
-    ax.set_yticks(ax.get_yticks()[::4])
     fig.tight_layout()
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
     plt.show()
 
+tenz=tt.tensor.from_list(np.load('blackscholes_8d.npy',allow_pickle=True))
+graph_stuff(a1,tenz)
 
-
-xs=a1['sigma'][0]
-inpps = [BlackScholesMCInputMA([13,10],k,r,t,[sig,.23],C,N) for sig in xs]
-ys_tt=[pricers[2].get_pv(inpp,w[2][0]) for inpp in inpps]
-ys_mc=[pricers[0].price(inpp) for inpp in inpps]
-
-fig = plt.figure()
-ax = fig.gca()
-ax.set_xticks(xs)
-ax.set_yticks(np.arange(0,10,.1))
-plt.scatter(xs,ys_tt,label="tt")
-plt.scatter(xs,ys_mc,label="mc")
-plt.legend()
-plt.grid()
-fig.autofmt_xdate()
-ax.set_xticks(ax.get_xticks()[::2])
-fig.tight_layout()
-plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
-plt.show()
-
-
+#%%
 
 #a=a1['s0']
 #a0=np.array([12,13])
@@ -823,4 +843,22 @@ ax.plot(x, norm.pdf(x),
 x
 # %%
 [x[j]-x[j+1] for j in [1,2,3,4,5,6]]
+# %%
+
+#%%%%%%%%%%%%%%%%%%55
+
+x=np.arange(16).reshape((4,2,2))
+z=np.arange(10).reshape(2,5)
+np.save("tempnp.bin",[x,z])
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+y = np.load('tempnp.bin.npy',allow_pickle=True)
+y
+# %%
+x
+# %%
+tens_l = tt.tensor.to_list(tens)
+np.save('blackscholes_8d',tens_l)
+#%%
+tens1 = np.load('blackscholes_8d.npy',allow_pickle=True)
 # %%
