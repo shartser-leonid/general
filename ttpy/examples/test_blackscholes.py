@@ -14,10 +14,16 @@ from scipy.stats import multivariate_normal
 import time
 
 import matplotlib.pyplot as plt
+from tt.amen import amen_solve
+import matplotlib.pyplot as plt
 
 
 import tt.cross.rectcross as rect_cross
+import scipy as sci
 
+from numpy.linalg import inv
+#%%
+#%%
 
 d = 5
 n = 10
@@ -160,11 +166,20 @@ def lin_ind(n0,ind):
         ni *= n0[i]
     return ii
 
+def invInd(j,n):
+    h1=ind2sub(n,j)
+    #print("h1",h1)
+    h1=h1[::-1]
+    #print("h1r",h1)
+    return lin_ind(n,h1)
+
+
 t=(1,0,2)
 print (lin_ind([2,3,5],t))
 print(tt.xfun([2,3,5]).full()[t])
 print(tt.xfun([2,3,5]).full())
 
+print(ind2sub(d*[2],5))
 
 
 #%%
@@ -579,6 +594,30 @@ class TTDiscretizationIndex:
 
         return {'spot_base':spot_base,'s0':s0,'sigma':sigma,'r':r,'t':t}
 
+class TTDiscretizationIndexOnlySpot(TTDiscretizationIndex):
+    def __init__(self,s : np.array,dvol :float):
+        TTDiscretizationIndex.__init__(self,s,dvol)
+        
+
+    def get_n(self):
+        s=self.disc_arrays['spot_base'].shape
+        
+        gn=s[0]*[s[1]]
+
+        return gn
+
+        
+    def index_to_var(self,index) -> dict:
+        # index structure: 
+        #ind1 = index.reshape()
+        #s = self.disc_arrays['spot']
+        #d = len(s)
+        #spot = [s[j][ind] for j,ind in enumerate(index[2*d:3*d])]
+        
+        #return {'spot':spot}
+        pass
+
+
 
 def pdf_multivariate_gauss(x, mu, cov):
     '''
@@ -720,11 +759,12 @@ pricers = [ ]
 #print("w=",w)
 
 #s,k,r,t,sigma,C,N = (120,100),(95,115),0.01,1.2,(.3,.2),np.array([[1,.7],[.7,1]]),1000000
+#%%
 inpMA=BlackScholesMCInputMA(s,k,r,t,sigma,C,N)
 pricers = [BlackScholesMCMA(),\
     BlackScholesIntegralMA(),\
         BlackScholesTTMA(10,PayoffInp(k),TTDiscretizationIndex(disc.get_arrays(),disc.get_dvol()))]
-
+#%%
 w=[pr.price(inpMA) for pr in pricers]
 #plt.scatter(w[0][:,0],w[0][:,1])
 print("w=",w)
@@ -743,9 +783,9 @@ w1=[pr.price(inp2) for pr in pricers[0:2]]
 print("w=",w1)
 
 #%%
-tens=w[2][0]
+#tens=w[2][0]
 #tens[]
-
+#tens = np.load('blackscholes_8d.npy',allow_pickle=True)
 
 ind1=TTDiscretizationIndex(disc.get_arrays(),disc.get_dvol())
 
@@ -861,4 +901,919 @@ tens_l = tt.tensor.to_list(tens)
 np.save('blackscholes_8d',tens_l)
 #%%
 tens1 = np.load('blackscholes_8d.npy',allow_pickle=True)
+# %%
+d=7
+n=2**d
+f = tt.vector(np.array([x**2 for x in np.arange(0,1,1/n)]).reshape(d*[2]) )
+
+# %%
+f.full().shape
+# %%
+f.core.shape
+# %%
+cores=tt.vector.to_list(f)
+# %%
+cores
+# %%
+pr=0
+for x in cores:
+    pr+=np.prod(x.shape)
+print(pr)
+# %%
+#M = tt.matrix()
+class Kk:
+    def __init__(self):
+        self.iik=0
+    def finite_diff(self,i2):
+        #print(i,"\n")
+        #print(k,"\n")
+        i1 = i2.astype(int)
+        y=np.zeros((i1.shape[0],1),np.float)
+        #print(self.iik)
+        self.iik+=1
+        for u in range(i1.shape[0]):
+            i=i1[u][:d]
+            k=i1[u][d:]
+
+            
+            l_i = int(sum([i[j]*2**j for j in range(d)]))
+            k_i = int(sum([k[j]*2**j for j in range(d)]))
+            y[u]=0.
+            if k_i==l_i-1:
+                y[u]=0.#-1.
+            else:
+                if k_i==l_i:
+                    y[u]=1.
+                    #print("!!!!!!!!!!!!!!!!!",k_i,)
+        return y
+    
+def expand_index(i,b,d):
+    j=i
+    r=[]
+    while d>0:
+        rr=j % b
+        r.append(int(rr))
+        j-=rr
+        j/=b
+        d-=1
+    return list(reversed(r))
+
+#%%
+
+
+#%%
+k = Kk()
+m = np.zeros(2*d*[2])
+for i in range(n):
+    for j in range(n):
+        ii = expand_index(i,2,d)
+        jj = expand_index(j,2,d)
+        ind=[*ii,*jj]
+        m[tuple(ind)] = k.finite_diff(np.array(ind).reshape(1,-1))[0,0]
+#%%
+pd.DataFrame(m.reshape(n,n))
+#%%
+ttmat=tt.matrix(m)
+
+#%%
+#print(finite_diff([0,0,0,0,0,0,0,0,1,1]))
+x0  = tt.vector(1*np.ones(np.array(2*d*[2])))
+x0=x0*10.0
+x1 = rect_cross.cross(Kk().finite_diff, x0,nswp=20)
+# %%
+x1.full().reshape(n,n) -  ttmat.full().reshape(n,n)
+#%%
+ttmat.full().reshape(n,n)
+# %%
+np.array(2*d*[2])
+# %%
+x0.full().shape
+# %%
+a=x1.full().reshape((n,n))
+# %%
+#pd.DataFrame(a)
+a
+# %%
+pd.DataFrame(a)
+# %%
+def tridiag(a, b, c, k1=-1, k2=0, k3=1):
+    return np.diag(a, k1) + np.diag(b, k2) + np.diag(c, k3)
+
+a = [-1, 0]; b = [1, 0, -1]; c = [0, 1]
+A = tridiag(a, b, c)
+A
+
+# %%
+d=6
+nn=2**d
+n=nn#nn-1
+
+D=-.5*n*np.eye(nn,nn,k=-1) - np.eye(nn,nn)*0 - .5*n*np.eye(nn,nn,k=1)*(-1)
+D[0,0]=-1*n
+D[0,1]=1*n
+D[n-1,n-1]=1*n
+D[n-1,n-2]=-1*n
+
+# boundary condition f(0) = c:
+c=4.0
+D[0,0]+=1
+#D[1,0]=0
+#D[2,0]=1
+#D[nn-1]=np.zeros((nn))
+#D[:,nn-1]=np.zeros((nn))
+#D[nn-1,0]=1
+#D[0,1]=0
+D
+
+#%%
+def Bd(y):
+    z = np.zeros_like(y)
+    z[0]=c
+    #z[1]=c
+    return y + z
+
+#%%
+print("rank=",np.linalg.matrix_rank(D))
+print('shape',D.shape)
+
+# %%
+start1,stop1=-2,2
+step = (stop1-start1)/n
+x=np.arange(start1,stop1,step)
+print(x)
+f=x**2
+#f=np.ones(n)
+print("shape x=",x.shape)
+print(f)
+print("\n\n",D.dot(f))
+print("\n\n",Bd(f))
+#%%
+#sigma=.2
+#r=0.05
+#L = -.5*sigma**2*D.dot(D)-(r)
+
+
+# %%
+
+tt_m=tt.matrix(D.reshape(2*d*[2]))
+#tt_bd=tt.matrix(Bd.reshape(2*d*[2]))
+
+# %%
+d*[2]
+# %%
+pp=1
+for _x in tt.matrix.to_list(tt_m):
+    pp+=np.prod(_x.shape)
+print(pp)
+print(np.prod(D.shape))
+print(3*n)
+# %%
+x.shape
+# %%
+#plt.plot(x,f)
+f_disp=f+c
+dDotF= D.dot(f_disp)
+dDotF[0]-=c
+plt.plot(x,dDotF)
+plt.show()
+plt.plot(x,f_disp)
+#%%
+D.dot(f)
+# %%
+tt_m
+# %%
+tt_f = tt.vector(f.reshape(d*[2]))
+#%%
+tt_f.full().reshape(-1)
+# %%
+m_times_f=tt.matvec(tt_m,tt_f)
+m_times_f_bd = tt.vector(Bd(m_times_f.full().reshape(-1)).reshape(d*[2]))
+# %%
+m_times_f_full=m_times_f.full().reshape(2**d)
+# %%
+np.sum(np.abs(m_times_f_full-D.dot(f)))
+# %%
+def _ind2sub(siz, idx):
+    '''
+    Translates full-format index into tt.vector one's.
+    ----------
+    Parameters:
+        siz - tt.vector modes
+        idx - full-vector index
+    Note: not vectorized.
+    '''
+    _np=np
+    n = len(siz)
+    subs = np.empty((n))
+    k = np.cumprod(siz[:-1])
+    k = np.concatenate((_np.ones(1), k))
+    for i in range(n - 1, -1, -1):
+        subs[i] = _np.floor(idx / k[i])
+        idx = idx % k[i]
+    return subs.astype(_np.int32)
+
+
+def _unit(n, d=None, j=None, tt_instance=True):
+    ''' Generates e_j _vector in tt.vector format
+    ---------
+    Parameters:
+        n - modes (either integer or array)
+        d - dimensionality (integer)
+        j - position of 1 in full-format e_j (integer)
+        tt_instance - if True, returns tt.vector;
+                      if False, returns tt cores as a list
+    '''
+    if isinstance(n, int):
+        if d is None:
+            d = 1
+        n = n * np.ones(d, dtype=np.int32)
+    else:
+        d = len(n)
+    if j is None:
+        j = 0
+    rv = []
+
+    j = _ind2sub(n, j)
+
+    for k in range(d):
+        rv.append(np.zeros((1, n[k], 1)))
+        rv[-1][0, j[k], 0] = 1
+    if tt_instance:
+        rv = tt.vector.from_list(rv)
+    return rv
+#%%
+def tt_bd(v):
+    mm = [2 for _ in range(d)] 
+    mi=0
+    print(mi)
+    v+=c*unit(mm,d,0)
+    return v
+
+
+
+#%%
+intgrate_back=amen_solve(tt_m,m_times_f_bd,tt.ones(d*[2]),1e-6)
+plt.plot(x,intgrate_back.full().reshape(2**d))
+plt.show()
+
+plt.plot(x,intgrate_back.full().reshape(-1))
+plt.show()
+
+tt_bd_integrate1=tt_bd(intgrate_back)
+tt_bd_integrate1.full().reshape(-1)
+#plt.plot(x,tt_bd_integrate1.full().reshape(-1))
+#plt.show()
+
+
+intgrate_back2=amen_solve(tt_m,tt_bd_integrate1,tt.ones(d*[2]),1e-6)
+plt.plot(x,intgrate_back2.full().reshape(2**d))
+plt.show()
+
+tt_bd_integrate2=tt_bd(intgrate_back2)
+intgrate_back3=amen_solve(tt_m,tt_bd_integrate2,tt.ones(d*[2]),1e-6)
+plt.plot(x,intgrate_back3.full().reshape(2**d))
+plt.show()
+
+
+# %%
+np.sum(np.abs(intgrate_back.full().reshape(2**d)-f))
+# %%
+plt.plot(x,intgrate_back.full().reshape(2**d))
+# %%
+plt.plot(x,m_times_f.full().reshape(2**d))
+# %%
+# %%
+400/6
+# %%
+m_times_f.full().reshape(-1)
+# %%
+m_times_f_bd.full().reshape(-1)
+# %%
+
+# %%
+ttD = tt.matrix(D.reshape(2*d*[2]))
+ttI = tt.matrix(np.eye(2**d).reshape(2*d*[2]))
+
+tt2=ttD.__kron__(ttI)
+# %%
+ttD
+# %%
+tt2
+# %%
+ttD
+# %%
+x=np.arange(0,1,1./n)
+y=np.arange(0,1,1./n)
+f2 = np.zeros((len(x),len(y)))
+for xx in range(len(x),len(y)):
+    for yy in y:
+        f2[xx,yy]=x[xx]**y[yy]*3
+# %%
+f2.shape
+# %%
+tt2_times_f2=tt.matvec(tt2,tt.vector(f2.reshape(2*d*[2])))
+# %%
+tt2_times_f2.full()
+# %%
+f=x**2+4
+#print(inv(D).dot(intgrate_back.full().reshape(2**d))-f)
+plt.plot(x,f)
+plt.show()
+Df=D.dot(f)
+plt.plot(x,Df)
+plt.show()
+invDDf = inv(D).dot(Df)
+plt.plot(x,Bd(invDDf))
+print(invDDf-f)
+# %%
+inv(D).dot(Df)
+# %%
+f[0]
+# %%
+d=10
+nn=2**d
+n=nn#nn-1
+
+D=-.5*n*np.eye(nn,nn,k=-1) - np.eye(nn,nn)*0 - .5*n*np.eye(nn,nn,k=1)*(-1)
+D[0,0]=-1*n
+D[0,1]=1*n
+D[n-1,n-1]=1*n
+D[n-1,n-2]=-1*n
+
+B = np.zeros_like(D)
+B[0,0]=1
+
+start1,stop1 =-5,6
+step = (stop1-start1)/n
+x = np.arange(start1,stop1,step)
+
+sigma = 0.2
+r=0.0
+k=np.log(100)
+time_steps=100
+T=1
+
+I = np.eye(n)
+BS = .5*(sigma**2)*D.dot(D)+ r*D - r*I
+payoff = np.maximum(np.exp(x)-np.exp(k),0)
+
+B = np.zeros_like(BS)
+B[0,0]=1
+B[n-1,n-1]=1
+
+BB = np.eye(n)
+BB = BB + B
+#f=1./(x**2)
+
+#plt.plot(x,BS.dot(f))
+T=1
+time_step = T/time_steps
+Times = np.arange(0,T,time_step)
+dt=Times[1]-Times[0]
+op=inv(I-dt*(BS+B))
+
+
+print(np.linalg.matrix_rank(B))
+print(np.linalg.matrix_rank(BS))
+print(np.linalg.matrix_rank(BS+B))
+print(np.linalg.matrix_rank(I+dt*(BS+B)))
+print(BS.shape)
+BS
+#%%
+
+
+u=payoff.copy()
+u[-1]-=(np.exp(x[-1])-np.exp(k))*dt
+u=op.dot(u)
+plt.plot(np.exp(x),payoff,np.exp(x),u)
+plt.show()
+for t in range(time_steps-1,0,-1)[:5]:
+    u[-1]-=(np.exp(x[-1])-np.exp(k))*dt
+    u=op.dot(u)
+    plt.plot(np.exp(x),u)
+    plt.show()
+    print("t=",t,u[-1]- (np.exp(x[-1]) - np.exp(k)),u[0] )
+
+plt.plot(np.exp(x),u)
+plt.show()
+
+
+print(np.linalg.matrix_rank(BS))
+print(np.linalg.matrix_rank(D.dot(D)))
+D
+#
+#np.matmul(D,D)
+# %%
+u
+# %%
+plt.plot(x,payoff)
+# %%
+D
+# %%
+np.linalg.matrix_rank(D)
+# %%
+n=2**10
+DD=np.zeros((n,n))
+start1,stop1 =-8,8
+step = (stop1-start1)/n
+x = np.arange(start1,stop1,step)
+h=step
+DD[0,1]=1/(2*h)
+for jj in range(n-2):
+    j=jj+1
+    DD[j,j-2+1]=-1/(2*h)
+    DD[j,j+1]=1/(2*h)
+# bd condition 2nd derivative = 0
+DD[n-1][n-1]=1/(h)
+DD[n-1][n-2]=-1/h
+
+DDD=np.zeros((n,n))
+DDD[0,1]=1/(h*h)
+DDD[0,0]=-2/(h*h)
+for jj in range(n-2):
+    j=jj+1
+    DDD[j,j-1]=1/(h*h)
+    DDD[j,j]=-2/(h*h)
+    DDD[j,j+1]=1/(h*h)
+# bd condition 2nd derivative = 0
+DDD[n-1][n-1]=-2/(h*h)
+DDD[n-1][n-2]=1/(h*h)
+
+print(DD)
+print("MyRakn=",np.linalg.matrix_rank(DDD))
+
+#%%
+print(DD)
+print(np.linalg.matrix_rank(DD))
+sigma=0.3
+I = np.eye(n)
+r=0.05
+BS = .5*(sigma**2)*(DD.dot(DD) - DD)  + r*DD - r*I
+BS1 = .5*(sigma**2)*(DD.dot(DD))
+BS2 = .5*(sigma**2)*DDD
+
+print(np.linalg.matrix_rank(BS))
+
+# %%
+T=1
+time_steps=400
+time_step = T/time_steps
+Times = np.arange(0,T,time_step)
+dt=Times[1]-Times[0]
+op=inv(I-dt*(BS))
+op1 = inv(I-dt*(BS1))
+op2 = inv(I-dt*(BS2))
+
+payoff = np.maximum(np.exp(x)-np.exp(k),0)
+u=payoff.copy()
+u1=payoff.copy()
+u2=payoff.copy()
+print(T)
+u=op.dot(u)
+plt.plot(np.exp(x),payoff,np.exp(x),u)
+plt.show()
+for t in range(time_steps-1,0,-1):
+    #print("t",Times[t])
+    u=op.dot(u)
+    u1=op1.dot(u1)
+    u2_ = u2.copy()
+    u2_[-1]=0
+    u2=op2.dot(u2_)
+plt.plot(np.exp(x),u)
+plt.plot(np.exp(x),u1)
+plt.plot(np.exp(x),u2)
+plt.show()
+plt.plot(np.exp(x),u1)
+plt.plot(np.exp(x),u2)
+plt.show()
+
+plt.plot(x,u1)
+plt.plot(x,u2)
+plt.show()
+#%%
+plt.plot(np.exp(x),DDD.dot(u2))
+plt.show()
+
+# %%
+print(x.shape)
+i=815
+print(np.exp(x[i]))
+print(u[i],u1[i],u2[i])
+bs(np.exp(x[i]),np.exp(k),T,r,0,sigma)
+# %%
+plt.plot(x[-100:],u2[-100:])
+# %%
+x[-100:]
+# %%
+ttBS = tt.matrix(BS.reshape(2*d*[2]))
+# %%
+ttBS
+# %%
+bslinear=BS.reshape(-1)
+# %%
+sum([1 for x in bslinear if np.abs(x)>1e-10])
+# %%
+ttBS.tt.core.shape
+# %%
+ttD=tt.matrix(DD.reshape(2*d*[2]))
+
+
+# %%
+ttD1=tt.kron(ttD,tt.eye(ttD.n))
+
+
+# %%
+ttD1
+# %%
+
+# %%
+ttu = tt.vector(payoff.reshape(d*[2]))
+#%%
+ttu
+#%%
+ttI=tt.eye(ttBS.n)
+#%%
+ttu = tt.vector(payoff.reshape(d*[2]))
+for t in range(time_steps,0,-1):
+    ttu=tt.amen.amen_solve(-dt*ttBS + ttI,ttu,ttu,1e-8)
+    #plt.plot(np.exp(x),payoff,np.exp(x),ttu.full().reshape(-1))
+    #plt.show()
+
+#%%
+#Q:  can we solve BS one mach (without time iteration)?
+#Q:  what would be the rank for multidimesnial operator with correlations (can test it against MC simulation)
+#%%
+#BS = .5*(sigma**2)*(DD.dot(DD) - DD)  + r*DD - r*I
+
+# u(t,x): u' = - BS u
+
+def make_Dt(n,T):
+    DD=np.zeros((n,n))
+    start1,stop1 =0,T
+    h = (stop1-start1)/n
+   
+    for j in range(n-1):
+        DD[j,j]=-1/h
+        DD[j,j+1]=1/h
+        
+    DD[n-1][n-1]=-1/h
+    return DD,h
+
+def make_tt_lhs(dt,g):
+    j=0
+    z=tt.vector(np.zeros(d*[2]))
+    lhs=tt.kron(z,z)
+    #print(lhs)
+    jlastInv=invInd(2**d-1,d*[2])
+    for gx in g:
+        print("j,gx: ",j,gx)
+        jinv=invInd(j,d*[2])
+        e_j=unit(d*[2],j=jinv)
+        e_last=unit(d*[2],j=jlastInv)
+        e_last*=-gx/dt
+        #print (j)
+        toadd=tt.kron(e_last,e_j)
+        #print("toadd\n",toadd)
+        lhs=lhs+toadd
+        j+=1
+    return lhs
+
+def make_tt_lhs_v2(dt,g):
+    j=0
+    z=tt.vector(np.zeros(d*[2]))
+    lhs=tt.kron(z,z)
+    #print(lhs)
+    jlastInv=invInd(2**d-1,d*[2])
+    e_last=unit(d*[2],j=jlastInv)
+    lhs=tt.kron(e_last,tt.vector(-g.reshape(d*[2])/dt))
+    return lhs
+
+
+
+dt_for_global = 2**(-d)
+lhs = make_tt_lhs_v2(dt_for_global,payoff)#make_tt_lhs(dt_for_global,payoff)
+#make_Dt(4,1)    
+#%%
+rrr=lhs.round(1e-10)
+#%%
+def print_rrr():
+    for x in range(2**d):
+        y=rrr[ind2sub(2*d*[2],832*x)]
+        if (np.abs(y)>1e-10):
+            print(x,y)
+print_rrr()
+#%%
+
+#%%
+makeDt,dt=make_Dt(n,T)
+Dop=makeDt.reshape(2*d*[2])
+ttI = tt.eye(ttD.n)
+ttII = tt.kron(ttI,ttI)
+ttDx=tt.kron(ttI,ttD)
+ttDt=tt.kron(tt.matrix(Dop),ttI) # should include final condition
+
+
+ttBSFull=ttDt 
+ttBSFull += .5*(sigma**2)*(ttDx.__matmul__(ttDx)-ttDx) 
+ttBSFull += r*ttDx - r*ttII
+#%%
+ttBSFull
+
+# lhs for the equation should be 0 + d/dt boundary condition left over 
+#lhs = make_tt_lhs(dt,payoff)
+#%%
+# global solution
+#bs_global_sol = tt.amen.amen_solve(ttBSFull,rrr,rrr,1e-8)
+bs_global_sol2 = tt.amen.amen_solve(ttBSFull,lhs,lhs,1e-8)
+bs_f = bs_global_sol2.full().reshape(2**d,2**d)
+plt.plot(np.exp(x[:900]),bs_f[-1,:900])
+plt.plot(np.exp(x[:900]),bs_f[0,:900])
+plt.show()
+
+
+#%%
+bs_global_sol = tt.amen.amen_solve(ttBSFull,rrr,rrr,1e-10)
+#%%
+bs_f_apx = bs_global_sol.full().reshape(2**d,2**d)
+#%%
+
+#%%
+
+bs_r = rrr.full().reshape(2**d,2**d)
+#%%
+lhs_full = lhs.full().reshape(2**d,2**d)
+#%%
+plt.plot(np.exp(x),lhs_full[:,0])
+plt.show()
+plt.plot(np.exp(x),lhs_full[:,-1])
+plt.show()
+plt.plot(np.exp(x),lhs_full[0,:])
+plt.show()
+plt.plot(np.exp(x),-dt*lhs_full[-1,:])
+plt.show()
+plt.plot(np.exp(x),lhs_full[-2,:])
+plt.show()
+#%%
+plt.plot(np.exp(x),-dt*lhs_full[-1,:])
+plt.plot(np.exp(x),-dt*bs_r[-1,:])
+plt.show()
+
+#%%
+#bs_f[0,:].shape
+bs_global_sol2 = tt.amen.amen_solve(ttBSFull,lhs,lhs,1e-11)
+bs_f = bs_global_sol2.full().reshape(2**d,2**d)
+
+bs_plot = [bs_f]#,bs_f_apx]
+lim_ix = 820
+for bs_pl in bs_plot:
+    plt.plot(np.exp(x[:lim_ix]),-dt*lhs_full[-1,:lim_ix],label='final cond')
+    plt.plot(np.exp(x[:lim_ix]),bs_pl[-1,:lim_ix],label = 'solution at final cond')
+    plt.plot(np.exp(x[:lim_ix]),bs_pl[0,:lim_ix],label='at t=0')
+    plt.plot(np.exp(x[:lim_ix]),[bs(np.exp(x),np.exp(k),T,r,0,sigma) for x in x[:lim_ix]],label='bs')
+    plt.legend()
+    plt.show()
+#%%
+lhs
+#%%
+ttuu = tt.vector(payoff.reshape(d*[2]))
+
+# %%
+plt.plot(np.exp(x),payoff,np.exp(x),ttu.full().reshape(-1))
+# %%
+ttu.full().reshape(-1)
+# %%
+print(x.shape)
+i=805
+for i in [805,815,850,900]:
+    print(np.exp(x[i]))
+    print("bm,tt,global:",u[i],ttu.full().reshape(-1)[i],bs_f_apx[0, i],bs_f[0, i])
+    print("bs=",bs(np.exp(x[i]),np.exp(k),T,r,0,sigma))
+    
+#%%
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
+
+def animate_heat_map(data):
+    fig = plt.figure()
+
+    
+    ax = sns.heatmap(data[0], vmin=0, vmax=1)
+
+    def init():
+        plt.clf()
+        ax = sns.heatmap(data[0], vmin=0, vmax=1)
+
+    def animate(i):
+        plt.clf()
+        ax = sns.heatmap(data[i], vmin=0, vmax=1)
+
+    anim = animation.FuncAnimation(fig, animate, init_func=init, interval=1000)
+
+    plt.show()
+# %%
+# multivariate Black-Scholes (start with 2 dim x1,x2, t)
+# x_i = xi = ln(Si) − (r - .5\sigma_i^2)*tau
+#
+# du/dt + .5*sum_{i,j}\sigma_i\sigma_j\rho_ij*d^2u/dx_idx_j - r*u=0 
+# u (t,x1,x2)
+
+sigma_1 = .12
+sigma_2 = .13
+rho = .3
+T = 1
+def ttmkron(a : tt.matrix,b :tt.matrix,c:tt.matrix):
+    return tt.kron(tt.kron(a,b),c)
+
+Dt_np,dt=make_Dt(n,T)
+ttDt = tt.matrix(Dt_np.reshape(2*d*[2]))
+ttDx = tt.matrix(DD.reshape(2*d*[2]))
+ttI = tt.eye(ttD.n)
+
+ttIII = ttmkron(ttI,ttI,ttI)
+ttDx1=ttmkron(ttI,ttDx,ttI)
+ttDx2=ttmkron(ttI,ttI,ttDx)
+
+ttDx1Dx2 = ttmkron(ttI,ttDx,ttDx)
+ttDx1Dx1 = ttmkron(ttI,ttDx.__matmul__(ttDx),ttI)
+ttDx2Dx2 = ttmkron(ttI,ttI,ttDx.__matmul__(ttDx))
+
+ttDt=ttmkron(ttDt,ttI,ttI) # should include final condition
+
+
+ttL=ttDt 
+ttL += .5*(2*rho*sigma_1*sigma_2*ttDx1Dx2 + sigma_1*sigma_1*ttDx1Dx1+ sigma_2*sigma_2*ttDx2Dx2) 
+ttL -= r*ttIII
+
+# %%
+# payoff as function of t,x1,x2
+
+
+def get_payoff_function_ind(strikes):
+    Karr = np.array(strikes)
+    sigma_a = np.array([sigma_1,sigma_2])
+    def payoff_function(x_vect):
+        # x_i = ln(Si) − (r - .5\sigma_i^2)*t
+        # e^x_i  = Si*exp(-(r-.5sigma^2)t)
+        # Si = exp( xi + (r-.5sigmai^2)t )
+        S = np.exp(x_vect + (r-.5*sigma_a**2)*T)
+        SminusK=S-Karr
+        payoff = np.amax(np.maximum(SminusK,0,),axis=0)
+        return payoff
+
+    def transform_ind_to_x(ind):
+        #print(ind)
+        return np.array([x[ind[0]],x[ind[1]]])
+
+    
+    def payoff_function_ind(ind):
+        x_vect = transform_ind_to_x(ind)
+        pf=payoff_function(x_vect)
+        #print("from f:",ind,x_vect,pf)
+        return pf
+    
+    def payoff_function_ind_batch(ind_batch):
+        y = ind_batch.astype(int)
+        return np.apply_along_axis(payoff_function_ind,1,y)
+
+    def transform_qttind_to_x(qttind):
+        #print(ind)
+        # qttind is of shape [2,....,2] + [2,....,2] (concat of 2 lists d*[2] and d*[2])
+        numAssets=2
+        ind=np.zeros(2).astype(int)
+        
+        ind[0] = lin_ind(d*[2],qttind[0:d]) # first asset
+        ind[1] = lin_ind(d*[2],qttind[d:2*d]) # second asset
+        ind[0]=invInd(ind[0],d*[2])
+        ind[1]=invInd(ind[1],d*[2])
+        x_vect=np.array([x[ind[0]],x[ind[1]]])
+        #print("0=",ind[0],"1=",ind[1],"x=",x_vect)
+        return x_vect
+
+    
+    def payoff_function_qttind(qttind):
+        x_vect = transform_qttind_to_x(qttind)
+        pf=payoff_function(x_vect)
+        #print("qtt=",qttind,"x=",x_vect,"pf=",pf)
+        return pf
+    
+    def payoff_function_qttind_batch(ind_batch):
+        y = ind_batch.astype(int)
+        return np.apply_along_axis(payoff_function_qttind,1,y)
+
+    return payoff_function_ind_batch,\
+        payoff_function_qttind_batch,payoff_function
+
+
+# %%
+f_temp,f_qtt,_=get_payoff_function_ind([100,150])
+def fit1():
+    x0 = tt.rand((x.shape[0],x.shape[0]), 2, 1)
+    x0 = 100.0*x0
+    x1 = rect_cross.cross(f_temp, x0,nswp=15)     
+    return x1
+
+def fit1_qtt():
+    x0 = tt.rand(2*d*[2], 2*d, 1)
+    #x0 = 100.0*x0
+    x1 = rect_cross.cross(f_qtt, x0,nswp=16)     
+    return x1
+
+qttPayoff = fit1_qtt()
+x1_full = qttPayoff.full().reshape(2**d,2**d)
+print(qttPayoff.core.shape[0])
+print(np.prod(qttPayoff.full().shape))
+
+#%%
+
+def make_qtt_2dim_rhs(dt,g):
+    z=tt.vector(np.zeros(d*[2]))
+    rhs=tt.kron(z,z)
+    jlastInv=invInd(2**d-1,d*[2])#invInd(2**d-1,d*[2])
+    e_last=unit(d*[2],j=jlastInv)
+    rhs=tt.kron(e_last,(1/dt)*g)
+    return rhs
+
+
+dt_for_global = 2**(-d)
+rhs = make_qtt_2dim_rhs(dt_for_global,qttPayoff)
+
+#%%
+# Solve the pde !!! we have bc and pde.
+bs_2dim = tt.amen.amen_solve(ttL,rhs,rhs,1e-8)
+#%%
+def bits(nn):
+    # The number of bits we need to represent the number
+
+    num_bits = d
+    print(num_bits)
+    # The bit representation of the number
+    bits = [ (nn >> i) & 1 for i in range(num_bits) ]
+    bits.reverse()
+    # Do we need a leading zero?
+    if nn < 0 or bits[0] == 0:
+        return bits
+    return bits
+#%%
+multislice0 =[0 for _ in range(d)] + [slice(0,2) for i in range(2*d)]  
+multislice1 =[1 for _ in range(d)] + [slice(0,2) for i in range(2*d)]  
+'''for j in range(0,0,-1):
+    print(j)
+    multislice1[d-j]=1
+'''
+
+u0=bs_2dim[multislice0]
+u1=bs_2dim[multislice1]
+u0_full = u0.full().reshape(2**d,2**d)
+u1_full = u1.full().reshape(2**d,2**d)
+
+p=[880,930]
+print (u0_full[p[0],p[1]],u1_full[p[0],p[1]],x1_full[p[0],p[1]])
+plt.imshow(x1_full)
+plt.show()
+plt.imshow(u0_full)
+plt.show()
+plt.imshow(u1_full)
+plt.show()
+#%%
+def rev_list(l):
+    l.reverse()
+indexes = [list(bits(k)) + [slice(0,2) for i in range(2*d)]  for k in (0,1,2,3,4,1022,1023)]
+indexes = [tuple(i) for i in indexes]
+data = [bs_2dim[m].full().reshape(2**d,2**d) for m in indexes]
+for i in data:
+    plt.imshow(i)
+    plt.show()
+#%%
+data
+#%%
+z = np.zeros((2**d,2**d))
+for i in range(2**d):
+    for j in range(2**d):
+        z[i,j]=f_temp(np.array([(i,j)]))
+# %%
+#np.argmax
+agmax=np.argmax(np.abs(z-x1_full))
+print(np.max(np.abs(z-x1_full)))
+print(z.reshape(-1)[agmax],x1_full.reshape(-1)[agmax])
+iii=ind2sub((1024,1024),invInd(agmax,(1024,1024)))
+print(iii)
+# %%
+x1_full
+# %%
+z
+# %%
+z.shape
+# %%
+test_pt=(880,930)
+test_pt=(iii[0],iii[1])
+test_pt=(945,950)
+
+a=get_payoff_function_ind([100,150])
+x_ve=np.array([x[test_pt[0]],x[test_pt[1]]])
+print(x_ve,a[2](x_ve),f_temp(np.array([test_pt])))
+print(z[test_pt],x1_full[test_pt])
+
 # %%
